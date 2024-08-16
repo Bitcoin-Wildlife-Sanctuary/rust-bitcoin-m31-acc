@@ -1,0 +1,12 @@
+[package]
+name = "rust-bitcoin-m31-acc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark" }
+bitcoin-script = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-script" }
+bitcoin = "0.32.0"
+bitcoin-scriptexec = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-scriptexec", features = ["debug"] }
