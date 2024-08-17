@@ -10,3 +10,4 @@ bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bi
 bitcoin-script = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-script" }
 bitcoin = "0.32.0"
 bitcoin-scriptexec = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-scriptexec", features = ["debug"] }
+anyhow = "1.0.86"

@@ -1,9 +1,7 @@
 pub mod table;
 
-pub mod lookup_8bit;
+pub mod lookup;
 
-pub mod m31_mult;
+pub mod m31;
 
 pub mod utils;
-
-pub mod limbs;
