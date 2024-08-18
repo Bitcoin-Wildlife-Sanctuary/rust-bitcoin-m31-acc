@@ -42,53 +42,55 @@ use bitcoin_circle_stark::OP_HINT;
 pub struct M31Mult;
 
 impl M31Mult {
-    pub fn compute_c_limbs(pairs: &[(u32, u32)]) -> Result<[i32; 4]> {
+    pub fn compute_c_limbs_from_limbs(a_limbs: &[i32], b_limbs: &[i32]) -> Result<[i32; 4]> {
         let mut c_limbs = [0i32; 4];
 
-        for &(a, b) in pairs.iter() {
-            let a_limbs = m31_to_limbs(a);
-            let b_limbs = m31_to_limbs(b);
+        c_limbs[0] += i32::try_from(a_limbs[0] * b_limbs[0])?;
 
-            c_limbs[0] += i32::try_from(a_limbs[0] * b_limbs[0])?;
+        c_limbs[1] += i32::try_from(a_limbs[0] * b_limbs[1])?;
+        c_limbs[1] += i32::try_from(a_limbs[1] * b_limbs[0])?;
 
-            c_limbs[1] += i32::try_from(a_limbs[0] * b_limbs[1])?;
-            c_limbs[1] += i32::try_from(a_limbs[1] * b_limbs[0])?;
+        c_limbs[2] += i32::try_from(a_limbs[0] * b_limbs[2])?;
+        c_limbs[2] += i32::try_from(a_limbs[1] * b_limbs[1])?;
+        c_limbs[2] += i32::try_from(a_limbs[2] * b_limbs[0])?;
 
-            c_limbs[2] += i32::try_from(a_limbs[0] * b_limbs[2])?;
-            c_limbs[2] += i32::try_from(a_limbs[1] * b_limbs[1])?;
-            c_limbs[2] += i32::try_from(a_limbs[2] * b_limbs[0])?;
+        c_limbs[3] += i32::try_from(a_limbs[0] * b_limbs[3])?;
+        c_limbs[3] += i32::try_from(a_limbs[1] * b_limbs[2])?;
+        c_limbs[3] += i32::try_from(a_limbs[2] * b_limbs[1])?;
+        c_limbs[3] += i32::try_from(a_limbs[3] * b_limbs[0])?;
 
-            c_limbs[3] += i32::try_from(a_limbs[0] * b_limbs[3])?;
-            c_limbs[3] += i32::try_from(a_limbs[1] * b_limbs[2])?;
-            c_limbs[3] += i32::try_from(a_limbs[2] * b_limbs[1])?;
-            c_limbs[3] += i32::try_from(a_limbs[3] * b_limbs[0])?;
+        c_limbs[0] += i32::try_from(a_limbs[1] * b_limbs[3])?
+            .checked_shl(1)
+            .ok_or(Error::msg("Unexpected overflow"))?;
+        c_limbs[0] += i32::try_from(a_limbs[2] * b_limbs[2])?
+            .checked_shl(1)
+            .ok_or(Error::msg("Unexpected overflow"))?;
+        c_limbs[0] += i32::try_from(a_limbs[3] * b_limbs[1])?
+            .checked_shl(1)
+            .ok_or(Error::msg("Unexpected overflow"))?;
 
-            c_limbs[0] += i32::try_from(a_limbs[1] * b_limbs[3])?
-                .checked_shl(1)
-                .ok_or(Error::msg("Unexpected overflow"))?;
-            c_limbs[0] += i32::try_from(a_limbs[2] * b_limbs[2])?
-                .checked_shl(1)
-                .ok_or(Error::msg("Unexpected overflow"))?;
-            c_limbs[0] += i32::try_from(a_limbs[3] * b_limbs[1])?
-                .checked_shl(1)
-                .ok_or(Error::msg("Unexpected overflow"))?;
+        c_limbs[1] += i32::try_from(a_limbs[2] * b_limbs[3])?
+            .checked_shl(1)
+            .ok_or(Error::msg("Unexpected overflow"))?;
+        c_limbs[1] += i32::try_from(a_limbs[3] * b_limbs[2])?
+            .checked_shl(1)
+            .ok_or(Error::msg("Unexpected overflow"))?;
 
-            c_limbs[1] += i32::try_from(a_limbs[2] * b_limbs[3])?
-                .checked_shl(1)
-                .ok_or(Error::msg("Unexpected overflow"))?;
-            c_limbs[1] += i32::try_from(a_limbs[3] * b_limbs[2])?
-                .checked_shl(1)
-                .ok_or(Error::msg("Unexpected overflow"))?;
-
-            c_limbs[2] += i32::try_from(a_limbs[3] * b_limbs[3])?
-                .checked_shl(1)
-                .ok_or(Error::msg("Unexpected overflow"))?;
-        }
+        c_limbs[2] += i32::try_from(a_limbs[3] * b_limbs[3])?
+            .checked_shl(1)
+            .ok_or(Error::msg("Unexpected overflow"))?;
 
         Ok(c_limbs)
     }
 
-    pub fn compute_q(c_limbs: &[i32; 4]) -> Result<i64> {
+    pub fn compute_c_limbs(a: u32, b: u32) -> Result<[i32; 4]> {
+        let a_limbs = m31_to_limbs(a);
+        let b_limbs = m31_to_limbs(b);
+
+        Self::compute_c_limbs_from_limbs(&a_limbs, &b_limbs)
+    }
+
+    pub fn compute_q(c_limbs: &[i32]) -> Result<i32> {
         let mut sum = 0i64;
         sum = sum
             .checked_add(c_limbs[3] as i64)
@@ -112,7 +114,7 @@ impl M31Mult {
             .checked_add(c_limbs[0] as i64)
             .ok_or(Error::msg("Unexpected overflow"))?;
 
-        let q = sum / ((1 << 31) - 1);
+        let q = (sum / ((1 << 31) - 1)) as i32;
         Ok(q)
     }
 }
@@ -289,6 +291,12 @@ impl M31MultGadget {
 
             OP_ADD
             OP_FROMALTSTACK OP_ADD
+
+            // enforce not negative
+            OP_DUP OP_DUP OP_ABS OP_EQUALVERIFY
+
+            // enforce smaller than the limit
+            OP_DUP { (1i64 << 31) - 1 } OP_LESSTHAN OP_VERIFY
         }
     }
 }
@@ -296,7 +304,7 @@ impl M31MultGadget {
 pub struct M31Limbs;
 
 impl M31Limbs {
-    pub fn add_limbs(a: &[i64], b: &[i64]) -> Vec<i64> {
+    pub fn add_limbs(a: &[i32], b: &[i32]) -> Vec<i32> {
         assert_eq!(a.len(), 4);
         assert_eq!(b.len(), 4);
 
@@ -376,11 +384,6 @@ impl M31LimbsGadget {
             { 1 + 4 } OP_ROLL
             { 0 + 1 + 4 } OP_ROLL
             OP_ADD OP_ADD
-            OP_DUP 128 OP_GREATERTHANOREQUAL
-            OP_IF
-                128 OP_SUB
-                OP_2SWAP OP_SWAP OP_1ADD OP_SWAP OP_2SWAP
-            OP_ENDIF
 
             // c1, c2, c3, c4
             // note: c4 could be a little bit larger, but our program can handle it
@@ -408,7 +411,7 @@ mod test {
             let a = prng.gen_range(0u32..((1 << 31) - 1));
             let b = prng.gen_range(0u32..((1 << 31) - 1));
 
-            let c_limbs = M31Mult::compute_c_limbs(&[(a, b)]).unwrap();
+            let c_limbs = M31Mult::compute_c_limbs(a, b).unwrap();
             let q = M31Mult::compute_q(&c_limbs).unwrap();
 
             let expected = (a as i64) * (b as i64) % ((1 << 31) - 1);
@@ -437,6 +440,8 @@ mod test {
             M31MultGadget::compute_c_limbs(0).len(),
         );
 
+        let table = generate_table::<9>();
+
         for i in 0..100 {
             let a = prng.gen_range(0u32..((1 << 31) - 1));
             let b = prng.gen_range(0u32..((1 << 31) - 1));
@@ -444,9 +449,7 @@ mod test {
             let a_limbs = m31_to_limbs(a);
             let b_limbs = m31_to_limbs(b);
 
-            let c_limbs = M31Mult::compute_c_limbs(&[(a, b)]).unwrap();
-
-            let table = generate_table::<9>();
+            let c_limbs = M31Mult::compute_c_limbs(a, b).unwrap();
 
             let script = script! {
                 { &table }
@@ -484,7 +487,7 @@ mod test {
             let a = prng.gen_range(0u32..((1 << 31) - 1));
             let b = prng.gen_range(0u32..((1 << 31) - 1));
 
-            let c_limbs = M31Mult::compute_c_limbs(&[(a, b)]).unwrap();
+            let c_limbs = M31Mult::compute_c_limbs(a, b).unwrap();
             let q = M31Mult::compute_q(&c_limbs).unwrap();
             let r = (a as i64) * (b as i64) % ((1 << 31) - 1);
 
@@ -526,17 +529,8 @@ mod test {
 
         let table = generate_table::<9>();
 
-        let mut c_limbs = vec![0i64; 4];
-
-        for i in 0..4 {
-            for j in 0..4 {
-                if i + j >= 4 {
-                    c_limbs[i + j - 4] += (a_plus_d_limbs[i] * b_plus_e_limbs[j]) * 2;
-                } else {
-                    c_limbs[i + j] += a_plus_d_limbs[i] * b_plus_e_limbs[j];
-                }
-            }
-        }
+        let c_limbs =
+            M31Mult::compute_c_limbs_from_limbs(&a_plus_d_limbs, &b_plus_e_limbs).unwrap();
 
         let script = script! {
             { &table }
