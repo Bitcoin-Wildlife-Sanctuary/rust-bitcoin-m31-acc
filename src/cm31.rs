@@ -5,6 +5,48 @@ use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
 use bitcoin_circle_stark::treepp::*;
 use rust_bitcoin_m31::{m31_add, m31_sub};
 
+pub struct CM31Mult;
+
+impl CM31Mult {
+    pub fn compute_hint_from_limbs(
+        a_real: &[i32],
+        a_imag: &[i32],
+        b_real: &[i32],
+        b_imag: &[i32],
+    ) -> Result<CM31MultHint> {
+        assert_eq!(a_real.len(), 4);
+        assert_eq!(a_imag.len(), 4);
+        assert_eq!(b_real.len(), 4);
+        assert_eq!(b_imag.len(), 4);
+
+        let a_real_b_real = M31Mult::compute_c_limbs_from_limbs(&a_real, &b_real)?;
+        let q3 = M31Mult::compute_q(&a_real_b_real)?;
+
+        let a_imag_b_imag = M31Mult::compute_c_limbs_from_limbs(&a_imag, &b_imag)?;
+        let q2 = M31Mult::compute_q(&a_imag_b_imag)?;
+
+        let a_real_imag_sum = M31Limbs::add_limbs(&a_real, &a_imag);
+        let b_real_imag_sum = M31Limbs::add_limbs(&b_real, &b_imag);
+        let a_real_imag_b_real_imag =
+            M31Mult::compute_c_limbs_from_limbs(&a_real_imag_sum, &b_real_imag_sum)?;
+        let q1 = M31Mult::compute_q(&a_real_imag_b_real_imag)?;
+
+        Ok(CM31MultHint { q1, q2, q3 })
+    }
+
+    pub fn compute_hint(a: &[u32], b: &[u32]) -> Result<CM31MultHint> {
+        assert_eq!(a.len(), 2);
+        assert_eq!(b.len(), 2);
+
+        let a_real = m31_to_limbs(a[0]);
+        let a_imag = m31_to_limbs(a[1]);
+        let b_real = m31_to_limbs(b[0]);
+        let b_imag = m31_to_limbs(b[1]);
+
+        Self::compute_hint_from_limbs(&a_real, &a_imag, &b_real, &b_imag)
+    }
+}
+
 pub struct CM31MultGadget;
 
 impl CM31MultGadget {
@@ -66,28 +108,10 @@ impl CM31MultGadget {
             OP_FROMALTSTACK
             OP_SWAP
             m31_sub
+
+            // follow the cm31 format: imag first, real second
+            OP_SWAP
         }
-    }
-
-    pub fn compute_hint(a: [u32; 2], b: [u32; 2]) -> Result<CM31MultHint> {
-        let a_real = m31_to_limbs(a[0]);
-        let a_imag = m31_to_limbs(a[1]);
-        let b_real = m31_to_limbs(b[0]);
-        let b_imag = m31_to_limbs(b[1]);
-
-        let a_real_b_real = M31Mult::compute_c_limbs_from_limbs(&a_real, &b_real)?;
-        let q3 = M31Mult::compute_q(&a_real_b_real)?;
-
-        let a_imag_b_imag = M31Mult::compute_c_limbs_from_limbs(&a_imag, &b_imag)?;
-        let q2 = M31Mult::compute_q(&a_imag_b_imag)?;
-
-        let a_real_imag_sum = M31Limbs::add_limbs(&a_real, &a_imag);
-        let b_real_imag_sum = M31Limbs::add_limbs(&b_real, &b_imag);
-        let a_real_imag_b_real_imag =
-            M31Mult::compute_c_limbs_from_limbs(&a_real_imag_sum, &b_real_imag_sum)?;
-        let q1 = M31Mult::compute_q(&a_real_imag_b_real_imag)?;
-
-        Ok(CM31MultHint { q1, q2, q3 })
     }
 }
 
@@ -106,16 +130,59 @@ impl Pushable for CM31MultHint {
     }
 }
 
+pub struct CM31Limbs;
+
+impl CM31Limbs {
+    pub fn add_limbs(a: &[i32], b: &[i32]) -> Vec<i32> {
+        assert_eq!(a.len(), 8);
+        assert_eq!(b.len(), 8);
+
+        let mut res = Vec::with_capacity(8);
+        res.extend_from_slice(&M31Limbs::add_limbs_with_reduction(&a[0..4], &b[0..4]));
+        res.extend_from_slice(&M31Limbs::add_limbs_with_reduction(&a[4..8], &b[4..8]));
+        res
+    }
+}
+
+pub struct CM31LimbsGadget;
+
+impl CM31LimbsGadget {
+    // a1, ..., a8
+    // b1, ..., b8
+    pub fn add_limbs() -> Script {
+        script! {
+            // pull a5, a6, a7, a8
+            for _ in 0..4 {
+                11 OP_ROLL
+            }
+            { M31LimbsGadget::add_limbs_with_reduction() }
+
+            // move to altstack
+            for _ in 0..4 {
+                OP_TOALTSTACK
+            }
+
+            { M31LimbsGadget::add_limbs_with_reduction() }
+
+            for _ in 0..4 {
+                OP_FROMALTSTACK
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::cm31::CM31MultGadget;
+    use crate::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget};
     use crate::table::generate_table;
-    use crate::utils::m31_to_limbs;
+    use crate::utils::{cm31_to_limbs, m31_to_limbs};
     use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
+    use rust_bitcoin_m31::cm31_equalverify;
+    use stwo_prover::core::fields::cm31::CM31;
 
     #[test]
     fn test_mult() {
@@ -131,16 +198,12 @@ mod test {
             let b_real = prng.gen_range(0u32..((1 << 31) - 1));
             let b_imag = prng.gen_range(0u32..((1 << 31) - 1));
 
-            let mut expected_real = (a_real as i64) * (b_real as i64) % ((1 << 31) - 1);
-            expected_real += (1 << 31) - 1;
-            expected_real -= (a_imag as i64) * (b_imag as i64) % ((1 << 31) - 1);
-            expected_real %= (1 << 31) - 1;
+            let a_cm31 = CM31::from_u32_unchecked(a_real, a_imag);
+            let b_cm31 = CM31::from_u32_unchecked(b_real, b_imag);
 
-            let mut expected_imag = (a_real as i64) * (b_imag as i64) % ((1 << 31) - 1);
-            expected_imag += (b_real as i64) * (a_imag as i64) % ((1 << 31) - 1);
-            expected_imag %= (1 << 31) - 1;
+            let expected = a_cm31 * b_cm31;
 
-            let hint = CM31MultGadget::compute_hint([a_real, a_imag], [b_real, b_imag]).unwrap();
+            let hint = CM31Mult::compute_hint(&[a_real, a_imag], &[b_real, b_imag]).unwrap();
 
             let script = script! {
                 { hint }
@@ -153,13 +216,52 @@ mod test {
                 { m31_to_limbs(b_real).to_vec() }
                 { m31_to_limbs(b_imag).to_vec() }
                 { CM31MultGadget::mult(i) }
-                { expected_imag } OP_EQUALVERIFY
-                { expected_real } OP_EQUALVERIFY
+                { expected.1.0 }
+                { expected.0.0 }
+                cm31_equalverify
                 for _ in 0..i {
                     OP_DROP
                 }
                 for _ in 0..256 {
                     OP_2DROP
+                }
+                OP_DROP
+                OP_TRUE
+            };
+
+            let exec_result = execute_script(script);
+            assert!(exec_result.success);
+        }
+    }
+
+    #[test]
+    fn test_add_limbs() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        report_bitcoin_script_size("cm31", "add_limbs", CM31LimbsGadget::add_limbs().len());
+
+        for _ in 0..100 {
+            let a_real = prng.gen_range(0u32..((1 << 31) - 1));
+            let a_imag = prng.gen_range(0u32..((1 << 31) - 1));
+            let b_real = prng.gen_range(0u32..((1 << 31) - 1));
+            let b_imag = prng.gen_range(0u32..((1 << 31) - 1));
+
+            let a_limbs = cm31_to_limbs(a_real, a_imag);
+            let b_limbs = cm31_to_limbs(b_real, b_imag);
+
+            let sum_limbs = CM31Limbs::add_limbs(&a_limbs, &b_limbs);
+
+            let script = script! {
+                for a_limb in a_limbs.iter() {
+                    { *a_limb }
+                }
+                for b_limb in b_limbs.iter() {
+                    { *b_limb }
+                }
+                { CM31LimbsGadget::add_limbs() }
+                for sum_limb in sum_limbs.iter().rev() {
+                    { *sum_limb }
+                    OP_EQUALVERIFY
                 }
                 OP_TRUE
             };

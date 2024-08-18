@@ -27,9 +27,9 @@ pub fn generate_table<const N: usize>() -> Table {
     assert!(N >= 1);
     assert!(N <= 9);
 
-    let mut v = vec![0i64; 1 << N];
+    let mut v = vec![0i64; (1 << N) + 1];
 
-    for i in 0..(1 << N) {
+    for i in 0..((1 << N) + 1) {
         v[i] = ((i * i) / 4) as i64;
     }
 
@@ -88,6 +88,7 @@ mod test {
             for _ in 0..256 {
                 OP_2DROP
             }
+            OP_DROP
             OP_TRUE
         };
 

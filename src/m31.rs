@@ -328,6 +328,15 @@ impl M31Limbs {
 
         res
     }
+
+    pub fn add_limbs_with_reduction(a: &[i32], b: &[i32]) -> Vec<i32> {
+        let mut res = Self::add_limbs(a, b);
+        if res[3] >= 128 {
+            res[3] -= 128;
+            res[0] += 1;
+        }
+        res
+    }
 }
 
 pub struct M31LimbsGadget;
@@ -387,6 +396,20 @@ impl M31LimbsGadget {
 
             // c1, c2, c3, c4
             // note: c4 could be a little bit larger, but our program can handle it
+        }
+    }
+
+    pub fn add_limbs_with_reduction() -> Script {
+        script! {
+            { Self::add_limbs() }
+
+            OP_DUP 128 OP_GREATERTHANOREQUAL OP_IF
+                128 OP_SUB
+                3 OP_ROLL OP_1ADD
+                3 OP_ROLL
+                3 OP_ROLL
+                3 OP_ROLL
+            OP_ENDIF
         }
     }
 }
@@ -469,6 +492,7 @@ mod test {
                 for _ in 0..256 {
                     OP_2DROP
                 }
+                OP_DROP
                 OP_TRUE
             };
 
@@ -544,6 +568,7 @@ mod test {
             for _ in 0..256 {
                 OP_2DROP
             }
+            OP_DROP
             OP_TRUE
         };
 

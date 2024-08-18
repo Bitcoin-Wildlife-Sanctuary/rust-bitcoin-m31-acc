@@ -92,6 +92,7 @@ mod test {
                 for _ in 0..256 {
                     OP_2DROP
                 }
+                OP_DROP
                 OP_TRUE
             };
 
