@@ -1,4 +1,4 @@
-use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
+use crate::treepp::pushable::{Builder, Pushable};
 use std::ops::Index;
 
 #[derive(Clone)]
@@ -38,9 +38,9 @@ pub fn generate_table<const N: usize>() -> Table {
 
 #[cfg(test)]
 mod test {
+    use crate::report_bitcoin_script_size;
     use crate::table::generate_table;
-    use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
-    use bitcoin_circle_stark::treepp::*;
+    use crate::treepp::*;
     pub use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;

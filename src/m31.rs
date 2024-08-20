@@ -34,10 +34,9 @@
 // - r = t
 
 use crate::lookup::Lookup8BitGadget;
-use crate::utils::m31_to_limbs;
+use crate::treepp::*;
+use crate::utils::{m31_to_limbs, OP_256MUL, OP_HINT};
 use anyhow::{Error, Result};
-use bitcoin_circle_stark::treepp::*;
-use bitcoin_circle_stark::OP_HINT;
 
 pub struct M31Mult;
 
@@ -267,27 +266,21 @@ impl M31MultGadget {
             // stack:
             //   c3, c2, c1, c4 - (q << 7)
 
-            OP_SIZE OP_NOT OP_NOTIF
-                OP_PUSHBYTES_1 OP_PUSHBYTES_0 OP_SWAP OP_CAT
-            OP_ENDIF
+            OP_256MUL
 
             3 OP_ROLL OP_ADD
 
             // stack:
             //   c2, c1, (c4 - (q << 7)) << 8 + c3
 
-            OP_SIZE OP_NOT OP_NOTIF
-                OP_PUSHBYTES_1 OP_PUSHBYTES_0 OP_SWAP OP_CAT
-            OP_ENDIF
+            OP_256MUL
 
             OP_ROT OP_ADD
 
             // stack:
             //   c2, ((c4 - (q << 7)) << 8 + c3 + c1) << 8 + c2
 
-            OP_SIZE OP_NOT OP_NOTIF
-                OP_PUSHBYTES_1 OP_PUSHBYTES_0 OP_SWAP OP_CAT
-            OP_ENDIF
+            OP_256MUL
 
             OP_ADD
             OP_FROMALTSTACK OP_ADD
@@ -417,10 +410,10 @@ impl M31LimbsGadget {
 #[cfg(test)]
 mod test {
     use crate::m31::{M31Limbs, M31LimbsGadget, M31Mult, M31MultGadget};
+    use crate::report_bitcoin_script_size;
     use crate::table::generate_table;
+    use crate::treepp::*;
     use crate::utils::m31_to_limbs;
-    use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
-    use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};

@@ -1,8 +1,8 @@
 use crate::m31::{M31Limbs, M31LimbsGadget, M31Mult, M31MultGadget};
+use crate::treepp::pushable::{Builder, Pushable};
+use crate::treepp::*;
 use crate::utils::m31_to_limbs;
 use anyhow::Result;
-use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
-use bitcoin_circle_stark::treepp::*;
 use rust_bitcoin_m31::{m31_add, m31_sub};
 
 pub struct CM31Mult;
@@ -174,10 +174,10 @@ impl CM31LimbsGadget {
 #[cfg(test)]
 mod test {
     use crate::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget};
+    use crate::report_bitcoin_script_size;
     use crate::table::generate_table;
+    use crate::treepp::*;
     use crate::utils::{cm31_to_limbs, m31_to_limbs};
-    use bitcoin_circle_stark::tests_utils::report::report_bitcoin_script_size;
-    use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
