@@ -2,7 +2,7 @@
 
 This repository is experimenting a way to perform a large number of M31 computation in a batch in a way to save overhead.
 
-This idea is from Avihu Levy from StarkWare.
+This idea is from [Avihu Levy](https://x.com/avihu28) from StarkWare.
 
 Liam Eagen from Alpen Labs was the first to point out doing multiplication of $a$ and $b$ through the squares of
 $a+b$ and $a-b$ and the side effect that the result is multiplied by 4 can be simply addressed by pre-floor-dividing 
