@@ -1,4 +1,21 @@
 {
   "projectName": "rust-bitcoin-m31-acc",
-  "projectOwner": "Bitcoin-Wildlife-Sanctuary"
+  "projectOwner": "Bitcoin-Wildlife-Sanctuary",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "Liam-Eagen",
+      "name": "Liam Eagen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5618692?v=4",
+      "profile": "https://github.com/Liam-Eagen",
+      "contributions": [
+        "research"
+      ]
+    }
+  ]
 }
