@@ -1,6 +1,6 @@
 use crate::treepp::*;
 
-pub fn m31_to_limbs(v: u32) -> [i32; 4] {
+pub fn convert_m31_to_limbs(v: u32) -> [i32; 4] {
     [
         (v & 255) as i32,
         ((v >> 8) & 255) as i32,
@@ -9,9 +9,9 @@ pub fn m31_to_limbs(v: u32) -> [i32; 4] {
     ]
 }
 
-pub fn cm31_to_limbs(real: u32, imag: u32) -> [i32; 8] {
-    let real_limbs = m31_to_limbs(real);
-    let imag_limbs = m31_to_limbs(imag);
+pub fn convert_cm31_to_limbs(real: u32, imag: u32) -> [i32; 8] {
+    let real_limbs = convert_m31_to_limbs(real);
+    let imag_limbs = convert_m31_to_limbs(imag);
 
     [
         real_limbs[0],
@@ -23,6 +23,13 @@ pub fn cm31_to_limbs(real: u32, imag: u32) -> [i32; 8] {
         imag_limbs[2],
         imag_limbs[3],
     ]
+}
+
+pub fn check_limb_format() -> Script {
+    script! {
+        OP_DUP 0 OP_GREATERTHANOREQUAL OP_VERIFY
+        OP_DUP 256 OP_LESSTHAN OP_VERIFY
+    }
 }
 
 #[allow(non_snake_case)]

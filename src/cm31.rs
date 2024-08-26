@@ -1,7 +1,7 @@
 use crate::m31::{M31Limbs, M31LimbsGadget, M31Mult, M31MultGadget};
 use crate::treepp::pushable::{Builder, Pushable};
 use crate::treepp::*;
-use crate::utils::m31_to_limbs;
+use crate::utils::convert_m31_to_limbs;
 use anyhow::Result;
 use rust_bitcoin_m31::{m31_add, m31_sub};
 
@@ -38,10 +38,10 @@ impl CM31Mult {
         assert_eq!(a.len(), 2);
         assert_eq!(b.len(), 2);
 
-        let a_real = m31_to_limbs(a[0]);
-        let a_imag = m31_to_limbs(a[1]);
-        let b_real = m31_to_limbs(b[0]);
-        let b_imag = m31_to_limbs(b[1]);
+        let a_real = convert_m31_to_limbs(a[0]);
+        let a_imag = convert_m31_to_limbs(a[1]);
+        let b_real = convert_m31_to_limbs(b[0]);
+        let b_imag = convert_m31_to_limbs(b[1]);
 
         Self::compute_hint_from_limbs(&a_real, &a_imag, &b_real, &b_imag)
     }
@@ -177,7 +177,7 @@ mod test {
     use crate::report_bitcoin_script_size;
     use crate::table::generate_table;
     use crate::treepp::*;
-    use crate::utils::{cm31_to_limbs, m31_to_limbs};
+    use crate::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
@@ -211,10 +211,10 @@ mod test {
                 for _ in 0..i {
                     { 1 }
                 }
-                { m31_to_limbs(a_real).to_vec() }
-                { m31_to_limbs(a_imag).to_vec() }
-                { m31_to_limbs(b_real).to_vec() }
-                { m31_to_limbs(b_imag).to_vec() }
+                { convert_m31_to_limbs(a_real).to_vec() }
+                { convert_m31_to_limbs(a_imag).to_vec() }
+                { convert_m31_to_limbs(b_real).to_vec() }
+                { convert_m31_to_limbs(b_imag).to_vec() }
                 { CM31MultGadget::mult(i) }
                 { expected.1.0 }
                 { expected.0.0 }
@@ -246,8 +246,8 @@ mod test {
             let b_real = prng.gen_range(0u32..((1 << 31) - 1));
             let b_imag = prng.gen_range(0u32..((1 << 31) - 1));
 
-            let a_limbs = cm31_to_limbs(a_real, a_imag);
-            let b_limbs = cm31_to_limbs(b_real, b_imag);
+            let a_limbs = convert_cm31_to_limbs(a_real, a_imag);
+            let b_limbs = convert_cm31_to_limbs(b_real, b_imag);
 
             let sum_limbs = CM31Limbs::add_limbs(&a_limbs, &b_limbs);
 

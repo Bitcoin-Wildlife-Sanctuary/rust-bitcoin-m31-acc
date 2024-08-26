@@ -24,3 +24,5 @@ pub mod cm31;
 pub mod qm31;
 
 pub mod decompose;
+
+pub mod dsl;

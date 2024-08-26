@@ -13,6 +13,7 @@ anyhow = "1.0.86"
 rust-bitcoin-m31 = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-m31" }
 stwo-prover = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo", branch = "dev" }
 itertools = "0.10.5"
+bitcoin-script-dsl =  { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/dsl" }
 
 [features]
 assume-op-cat = []

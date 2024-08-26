@@ -35,7 +35,7 @@
 
 use crate::lookup::Lookup8BitGadget;
 use crate::treepp::*;
-use crate::utils::{m31_to_limbs, OP_256MUL, OP_HINT};
+use crate::utils::{convert_m31_to_limbs, OP_256MUL, OP_HINT};
 use anyhow::{Error, Result};
 
 pub struct M31Mult;
@@ -83,8 +83,8 @@ impl M31Mult {
     }
 
     pub fn compute_c_limbs(a: u32, b: u32) -> Result<[i32; 4]> {
-        let a_limbs = m31_to_limbs(a);
-        let b_limbs = m31_to_limbs(b);
+        let a_limbs = convert_m31_to_limbs(a);
+        let b_limbs = convert_m31_to_limbs(b);
 
         Self::compute_c_limbs_from_limbs(&a_limbs, &b_limbs)
     }
@@ -413,7 +413,7 @@ mod test {
     use crate::report_bitcoin_script_size;
     use crate::table::generate_table;
     use crate::treepp::*;
-    use crate::utils::m31_to_limbs;
+    use crate::utils::convert_m31_to_limbs;
     use bitcoin_script::script;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
@@ -462,8 +462,8 @@ mod test {
             let a = prng.gen_range(0u32..((1 << 31) - 1));
             let b = prng.gen_range(0u32..((1 << 31) - 1));
 
-            let a_limbs = m31_to_limbs(a);
-            let b_limbs = m31_to_limbs(b);
+            let a_limbs = convert_m31_to_limbs(a);
+            let b_limbs = convert_m31_to_limbs(b);
 
             let c_limbs = M31Mult::compute_c_limbs(a, b).unwrap();
 
@@ -532,14 +532,14 @@ mod test {
         let a = prng.gen_range(0u32..((1 << 31) - 1));
         let b = prng.gen_range(0u32..((1 << 31) - 1));
 
-        let a_limbs = m31_to_limbs(a);
-        let b_limbs = m31_to_limbs(b);
+        let a_limbs = convert_m31_to_limbs(a);
+        let b_limbs = convert_m31_to_limbs(b);
 
         let d = prng.gen_range(0u32..((1 << 31) - 1));
         let e = prng.gen_range(0u32..((1 << 31) - 1));
 
-        let d_limbs = m31_to_limbs(d);
-        let e_limbs = m31_to_limbs(e);
+        let d_limbs = convert_m31_to_limbs(d);
+        let e_limbs = convert_m31_to_limbs(e);
 
         let a_plus_d_limbs = M31Limbs::add_limbs(&a_limbs, &d_limbs);
         let b_plus_e_limbs = M31Limbs::add_limbs(&b_limbs, &e_limbs);

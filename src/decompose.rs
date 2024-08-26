@@ -106,7 +106,7 @@ impl DecomposeGadget {
 mod test {
     use crate::decompose::DecomposeGadget;
     use crate::treepp::*;
-    use crate::utils::m31_to_limbs;
+    use crate::utils::convert_m31_to_limbs;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
@@ -118,7 +118,7 @@ mod test {
 
         for _ in 0..100 {
             let a = prng.gen_range(0..((1 << 31) - 1));
-            let a_limbs = m31_to_limbs(a);
+            let a_limbs = convert_m31_to_limbs(a);
 
             let script = script! {
                 { a_limbs.to_vec() }
@@ -140,8 +140,8 @@ mod test {
             let a_real = prng.gen_range(0..((1 << 31) - 1));
             let a_imag = prng.gen_range(0..((1 << 31) - 1));
 
-            let a_real_limbs = m31_to_limbs(a_real);
-            let a_imag_limbs = m31_to_limbs(a_imag);
+            let a_real_limbs = convert_m31_to_limbs(a_real);
+            let a_imag_limbs = convert_m31_to_limbs(a_imag);
 
             let script = script! {
                 { a_real_limbs.to_vec() }
@@ -168,10 +168,10 @@ mod test {
             let a_second_real = prng.gen_range(0..((1 << 31) - 1));
             let a_second_imag = prng.gen_range(0..((1 << 31) - 1));
 
-            let a_first_real_limbs = m31_to_limbs(a_first_real);
-            let a_first_imag_limbs = m31_to_limbs(a_first_imag);
-            let a_second_real_limbs = m31_to_limbs(a_second_real);
-            let a_second_imag_limbs = m31_to_limbs(a_second_imag);
+            let a_first_real_limbs = convert_m31_to_limbs(a_first_real);
+            let a_first_imag_limbs = convert_m31_to_limbs(a_first_imag);
+            let a_second_real_limbs = convert_m31_to_limbs(a_second_real);
+            let a_second_imag_limbs = convert_m31_to_limbs(a_second_imag);
 
             let script = script! {
                 { a_first_real_limbs.to_vec() }

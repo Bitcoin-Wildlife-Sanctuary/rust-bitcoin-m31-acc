@@ -1,7 +1,7 @@
 use crate::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget, CM31MultHint};
 use crate::treepp::pushable::{Builder, Pushable};
 use crate::treepp::*;
-use crate::utils::cm31_to_limbs;
+use crate::utils::convert_cm31_to_limbs;
 use anyhow::Result;
 use rust_bitcoin_m31::{
     cm31_add, cm31_copy, cm31_double, cm31_dup, cm31_fromaltstack, cm31_rot, cm31_sub, cm31_swap,
@@ -113,10 +113,10 @@ impl QM31Mult {
         assert_eq!(a.len(), 4);
         assert_eq!(b.len(), 4);
 
-        let a_first = cm31_to_limbs(a[0], a[1]);
-        let a_second = cm31_to_limbs(a[2], a[3]);
-        let b_first = cm31_to_limbs(b[0], b[1]);
-        let b_second = cm31_to_limbs(b[2], b[3]);
+        let a_first = convert_cm31_to_limbs(a[0], a[1]);
+        let a_second = convert_cm31_to_limbs(a[2], a[3]);
+        let b_first = convert_cm31_to_limbs(b[0], b[1]);
+        let b_second = convert_cm31_to_limbs(b[2], b[3]);
 
         let a_first_b_first = CM31Mult::compute_hint_from_limbs(
             &a_first[0..4],
@@ -170,7 +170,7 @@ mod test {
     use crate::report_bitcoin_script_size;
     use crate::table::generate_table;
     use crate::treepp::*;
-    use crate::utils::m31_to_limbs;
+    use crate::utils::convert_m31_to_limbs;
     use bitcoin_scriptexec::execute_script;
     use itertools::Itertools;
     use rand::{Rng, SeedableRng};
@@ -208,10 +208,10 @@ mod test {
                     { 1 }
                 }
                 for &a_element in a.iter() {
-                    { m31_to_limbs(a_element).to_vec() }
+                    { convert_m31_to_limbs(a_element).to_vec() }
                 }
                 for &b_element in b.iter() {
-                    { m31_to_limbs(b_element).to_vec() }
+                    { convert_m31_to_limbs(b_element).to_vec() }
                 }
                 { QM31MultGadget::mult(i) }
                 { expected.1.1.0 }
