@@ -54,7 +54,7 @@ impl Lookup8BitGadget {
 #[cfg(test)]
 mod test {
     use crate::lookup::Lookup8BitGadget;
-    use crate::table::generate_table;
+    use crate::table::get_table;
     use crate::{report_bitcoin_script_size, treepp::*};
     use bitcoin_script::script;
     use bitcoin_scriptexec::execute_script;
@@ -68,7 +68,7 @@ mod test {
         report_bitcoin_script_size("lookup-8bit", "k = 0", lookup_0_script.len());
 
         let mut prng = ChaCha20Rng::seed_from_u64(0);
-        let table = generate_table::<9>();
+        let table = get_table();
 
         for i in 0..100 {
             let a = prng.gen_range(0usize..(1 << 8));
@@ -77,7 +77,7 @@ mod test {
             let expected = a * b;
 
             let script = script! {
-                { &table }
+                { table }
                 for _ in 0..i {
                     { 1 }
                 }

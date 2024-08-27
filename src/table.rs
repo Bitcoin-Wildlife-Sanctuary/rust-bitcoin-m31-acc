@@ -1,5 +1,8 @@
 use crate::treepp::pushable::{Builder, Pushable};
 use std::ops::Index;
+use std::sync::OnceLock;
+
+pub static TABLE: OnceLock<Table> = OnceLock::new();
 
 #[derive(Clone)]
 pub struct Table {
@@ -36,10 +39,14 @@ pub fn generate_table<const N: usize>() -> Table {
     Table { data: v }
 }
 
+pub fn get_table() -> &'static Table {
+    TABLE.get_or_init(|| generate_table::<9>())
+}
+
 #[cfg(test)]
 mod test {
     use crate::report_bitcoin_script_size;
-    use crate::table::generate_table;
+    use crate::table::get_table;
     use crate::treepp::*;
     pub use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
@@ -50,7 +57,7 @@ mod test {
     fn test_hypothesis() {
         let mut prng = ChaCha20Rng::seed_from_u64(0);
 
-        let table = generate_table::<9>();
+        let table = get_table();
 
         for _ in 0..100 {
             let mut a = prng.gen_range(0usize..(1 << 8));
@@ -71,19 +78,19 @@ mod test {
 
     #[test]
     fn test_pushable() {
-        let table = generate_table::<9>();
+        let table = get_table();
 
         report_bitcoin_script_size(
             "table",
             "push_table",
             script! {
-                { &table }
+                { table }
             }
             .len(),
         );
 
         let script = script! {
-            { &table }
+            { table }
 
             for _ in 0..256 {
                 OP_2DROP

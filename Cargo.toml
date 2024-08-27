@@ -17,3 +17,9 @@ bitcoin-script-dsl =  { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/dsl
 
 [features]
 assume-op-cat = []
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+lto = true

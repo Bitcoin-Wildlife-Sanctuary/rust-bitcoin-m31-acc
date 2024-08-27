@@ -175,7 +175,7 @@ impl CM31LimbsGadget {
 mod test {
     use crate::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget};
     use crate::report_bitcoin_script_size;
-    use crate::table::generate_table;
+    use crate::table::get_table;
     use crate::treepp::*;
     use crate::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use bitcoin_scriptexec::execute_script;
@@ -190,7 +190,7 @@ mod test {
 
         report_bitcoin_script_size("cm31", "mult", CM31MultGadget::mult(0).len());
 
-        let table = generate_table::<9>();
+        let table = get_table();
 
         for i in 0..100 {
             let a_real = prng.gen_range(0u32..((1 << 31) - 1));
@@ -207,7 +207,7 @@ mod test {
 
             let script = script! {
                 { hint }
-                { &table }
+                { table }
                 for _ in 0..i {
                     { 1 }
                 }

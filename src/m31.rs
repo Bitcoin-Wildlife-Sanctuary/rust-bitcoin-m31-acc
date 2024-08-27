@@ -411,7 +411,7 @@ impl M31LimbsGadget {
 mod test {
     use crate::m31::{M31Limbs, M31LimbsGadget, M31Mult, M31MultGadget};
     use crate::report_bitcoin_script_size;
-    use crate::table::generate_table;
+    use crate::table::get_table;
     use crate::treepp::*;
     use crate::utils::convert_m31_to_limbs;
     use bitcoin_script::script;
@@ -456,7 +456,7 @@ mod test {
             M31MultGadget::compute_c_limbs(0).len(),
         );
 
-        let table = generate_table::<9>();
+        let table = get_table();
 
         for i in 0..100 {
             let a = prng.gen_range(0u32..((1 << 31) - 1));
@@ -468,7 +468,7 @@ mod test {
             let c_limbs = M31Mult::compute_c_limbs(a, b).unwrap();
 
             let script = script! {
-                { &table }
+                { table }
                 for _ in 0..i {
                     { 1 }
                 }
@@ -544,13 +544,13 @@ mod test {
         let a_plus_d_limbs = M31Limbs::add_limbs(&a_limbs, &d_limbs);
         let b_plus_e_limbs = M31Limbs::add_limbs(&b_limbs, &e_limbs);
 
-        let table = generate_table::<9>();
+        let table = get_table();
 
         let c_limbs =
             M31Mult::compute_c_limbs_from_limbs(&a_plus_d_limbs, &b_plus_e_limbs).unwrap();
 
         let script = script! {
-            { &table }
+            { table }
             { a_plus_d_limbs.to_vec() }
             { b_plus_e_limbs.to_vec() }
             { M31MultGadget::compute_c_limbs(0) }

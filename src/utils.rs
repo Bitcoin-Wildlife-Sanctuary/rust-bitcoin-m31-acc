@@ -1,4 +1,5 @@
 use crate::treepp::*;
+use stwo_prover::core::fields::cm31::CM31;
 
 pub fn convert_m31_to_limbs(v: u32) -> [i32; 4] {
     [
@@ -7,6 +8,10 @@ pub fn convert_m31_to_limbs(v: u32) -> [i32; 4] {
         ((v >> 16) & 255) as i32,
         ((v >> 24) & 255) as i32,
     ]
+}
+
+pub fn convert_m31_from_limbs(v: &[i32]) -> u32 {
+    (v[0] as u32) + ((v[1] as u32) << 8) + ((v[2] as u32) << 16) + ((v[3] as u32) << 24)
 }
 
 pub fn convert_cm31_to_limbs(real: u32, imag: u32) -> [i32; 8] {
@@ -23,6 +28,12 @@ pub fn convert_cm31_to_limbs(real: u32, imag: u32) -> [i32; 8] {
         imag_limbs[2],
         imag_limbs[3],
     ]
+}
+
+pub fn convert_cm31_from_limbs(v: &[i32]) -> CM31 {
+    let real = convert_m31_from_limbs(&v[0..4]);
+    let imag = convert_m31_from_limbs(&v[4..8]);
+    CM31::from_u32_unchecked(real, imag)
 }
 
 pub fn check_limb_format() -> Script {
