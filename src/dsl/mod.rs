@@ -6,6 +6,8 @@ pub mod cm31;
 
 pub mod qm31;
 
+pub mod example;
+
 use crate::dsl::table::{push_table, push_table_gadget};
 use bitcoin_script_dsl::dsl::{ElementType, DSL};
 use bitcoin_script_dsl::functions::FunctionMetadata;
