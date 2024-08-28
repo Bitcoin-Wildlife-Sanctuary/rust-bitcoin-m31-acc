@@ -1,9 +1,15 @@
 use crate::m31::{M31Mult, M31MultGadget};
 use crate::treepp::*;
-use crate::utils::{check_limb_format, convert_m31_from_limbs, OP_256MUL, OP_HINT};
+use crate::utils::{
+    check_limb_format, convert_m31_from_limbs, convert_m31_to_limbs, OP_256MUL, OP_HINT,
+};
 use anyhow::{Error, Result};
+use bitcoin::opcodes::Ordinary::OP_EQUALVERIFY;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
+use rust_bitcoin_m31::push_m31_one;
+use stwo_prover::core::fields::m31::M31;
+use stwo_prover::core::fields::FieldExpOps;
 
 pub fn m31_to_limbs(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
     let num = dsl.get_num(inputs[0])?;
@@ -96,6 +102,48 @@ pub fn m31_limbs_mul_gadget(r: &[usize]) -> Result<Script> {
     })
 }
 
+pub fn m31_limbs_inverse(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[1])?;
+    let a_val = convert_m31_from_limbs(a);
+
+    let a_m31 = M31::from_u32_unchecked(a_val);
+
+    let inv = a_m31.inverse().0;
+
+    let c_limbs = M31Mult::compute_c_limbs(a_val, inv)?;
+    let q = M31Mult::compute_q(&c_limbs)?;
+
+    let output_entry = MemoryEntry::new(
+        "m31_limbs",
+        Element::ManyNum(convert_m31_to_limbs(inv).to_vec()),
+    );
+
+    Ok(FunctionOutput {
+        new_elements: vec![output_entry.clone()],
+        new_hints: vec![output_entry, MemoryEntry::new("m31", Element::Num(q))],
+    })
+}
+
+pub fn m31_limbs_inverse_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
+        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
+        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
+        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
+
+        for _ in 0..4 {
+            7 OP_ROLL
+        }
+        for _ in 0..4 {
+            7 OP_PICK
+        }
+
+        { M31MultGadget::compute_c_limbs(r[0] - 512 + 4) }
+        { M31MultGadget::reduce() }
+        push_m31_one OP_EQUALVERIFY
+    })
+}
+
 pub(crate) fn load_functions(dsl: &mut DSL) {
     dsl.add_function(
         "m31_to_limbs",
@@ -124,6 +172,15 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             output: vec!["m31"],
         },
     );
+    dsl.add_function(
+        "m31_limbs_inverse",
+        FunctionMetadata {
+            trace_generator: m31_limbs_inverse,
+            script_generator: m31_limbs_inverse_gadget,
+            input: vec!["table", "m31_limbs"],
+            output: vec!["m31_limbs"],
+        },
+    );
 }
 
 #[cfg(test)]
@@ -134,6 +191,8 @@ mod test {
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
+    use stwo_prover::core::fields::m31::M31;
+    use stwo_prover::core::fields::FieldExpOps;
 
     #[test]
     fn test_m31_to_limbs() {
@@ -196,6 +255,35 @@ mod test {
 
         assert_eq!(res.len(), 1);
         assert_eq!(dsl.get_num(res[0]).unwrap(), r as i32);
+
+        test_program(dsl).unwrap();
+    }
+
+    #[test]
+    fn test_m31_limbs_inverse() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a = prng.gen_range(0u32..((1 << 31) - 1));
+        let a_limbs = convert_m31_to_limbs(a);
+        let inv = M31::from_u32_unchecked(a).inverse();
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input("m31_limbs", Element::ManyNum(a_limbs.to_vec()))
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+        let res = dsl.execute("m31_limbs_inverse", &[table, a]).unwrap();
+
+        assert_eq!(res.len(), 1);
+        assert_eq!(
+            dsl.get_many_num(res[0]).unwrap(),
+            convert_m31_to_limbs(inv.0)
+        );
 
         test_program(dsl).unwrap();
     }

@@ -80,22 +80,23 @@ pub fn qm31_limbs_mul(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput>
 
     let expected = a_qm31 * b_qm31;
 
+    let new_hints = [hint.h1, hint.h2, hint.h3]
+        .iter()
+        .flat_map(|x| {
+            vec![
+                MemoryEntry::new("qm31", Element::Num(x.q1)),
+                MemoryEntry::new("qm31", Element::Num(x.q2)),
+                MemoryEntry::new("qm31", Element::Num(x.q3)),
+            ]
+        })
+        .collect_vec();
+
     Ok(FunctionOutput {
         new_elements: vec![MemoryEntry::new(
             "qm31",
             Element::ManyNum(reformat_qm31_to_dsl_element(expected)),
         )],
-        new_hints: vec![
-            MemoryEntry::new("qm31", Element::Num(hint.h1.q1)),
-            MemoryEntry::new("qm31", Element::Num(hint.h1.q2)),
-            MemoryEntry::new("qm31", Element::Num(hint.h1.q3)),
-            MemoryEntry::new("qm31", Element::Num(hint.h2.q1)),
-            MemoryEntry::new("qm31", Element::Num(hint.h2.q2)),
-            MemoryEntry::new("qm31", Element::Num(hint.h2.q3)),
-            MemoryEntry::new("qm31", Element::Num(hint.h3.q1)),
-            MemoryEntry::new("qm31", Element::Num(hint.h3.q2)),
-            MemoryEntry::new("qm31", Element::Num(hint.h3.q3)),
-        ],
+        new_hints,
     })
 }
 
