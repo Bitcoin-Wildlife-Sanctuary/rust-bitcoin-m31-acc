@@ -44,7 +44,6 @@ pub fn column_line_coeffs(
 ) -> Result<FunctionOutput> {
     let y = dsl.get_many_num(inputs[1])?;
     let y_qm31 = convert_qm31_from_limbs(y);
-
     let y_imag_inv = y_qm31.1.inverse();
 
     todo!()

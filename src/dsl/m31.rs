@@ -4,7 +4,8 @@ use crate::utils::{
     check_limb_format, convert_m31_from_limbs, convert_m31_to_limbs, OP_256MUL, OP_HINT,
 };
 use anyhow::{Error, Result};
-use bitcoin::opcodes::Ordinary::OP_EQUALVERIFY;
+use bitcoin::opcodes::all::OP_FROMALTSTACK;
+use bitcoin::opcodes::Ordinary::{OP_EQUALVERIFY, OP_SWAP};
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use rust_bitcoin_m31::push_m31_one;
@@ -126,21 +127,16 @@ pub fn m31_limbs_inverse(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutp
 
 pub fn m31_limbs_inverse_gadget(r: &[usize]) -> Result<Script> {
     Ok(script! {
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-
         for _ in 0..4 {
-            7 OP_ROLL
+            OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
         }
-        for _ in 0..4 {
-            7 OP_PICK
-        }
-
-        { M31MultGadget::compute_c_limbs(r[0] - 512 + 4) }
+        { M31MultGadget::compute_c_limbs(r[0] - 512) }
         { M31MultGadget::reduce() }
         push_m31_one OP_EQUALVERIFY
+
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_2SWAP
     })
 }
 
