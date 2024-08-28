@@ -1,5 +1,6 @@
 use crate::treepp::*;
 use stwo_prover::core::fields::cm31::CM31;
+use stwo_prover::core::fields::qm31::QM31;
 
 pub fn convert_m31_to_limbs(v: u32) -> [i32; 4] {
     [
@@ -34,6 +35,42 @@ pub fn convert_cm31_from_limbs(v: &[i32]) -> CM31 {
     let real = convert_m31_from_limbs(&v[0..4]);
     let imag = convert_m31_from_limbs(&v[4..8]);
     CM31::from_u32_unchecked(real, imag)
+}
+
+pub fn convert_qm31_to_limbs(qm31: QM31) -> [i32; 16] {
+    let first = qm31.0;
+    let second = qm31.1;
+
+    let first_limbs = convert_cm31_to_limbs(first.0 .0, first.1 .0);
+    let second_limbs = convert_cm31_to_limbs(second.0 .0, second.1 .0);
+
+    [
+        first_limbs[0],
+        first_limbs[1],
+        first_limbs[2],
+        first_limbs[3],
+        first_limbs[4],
+        first_limbs[5],
+        first_limbs[6],
+        first_limbs[7],
+        second_limbs[0],
+        second_limbs[1],
+        second_limbs[2],
+        second_limbs[3],
+        second_limbs[4],
+        second_limbs[5],
+        second_limbs[6],
+        second_limbs[7],
+    ]
+}
+
+pub fn convert_qm31_from_limbs(v: &[i32]) -> QM31 {
+    let first = convert_cm31_from_limbs(&v[0..8]);
+    let second = convert_cm31_from_limbs(&v[8..16]);
+    QM31 {
+        0: first,
+        1: second,
+    }
 }
 
 pub fn check_limb_format() -> Script {

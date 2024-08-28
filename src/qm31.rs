@@ -109,14 +109,16 @@ impl QM31MultGadget {
 pub struct QM31Mult;
 
 impl QM31Mult {
-    pub fn compute_hint(a: &[u32], b: &[u32]) -> Result<QM31MultHint> {
-        assert_eq!(a.len(), 4);
-        assert_eq!(b.len(), 4);
-
-        let a_first = convert_cm31_to_limbs(a[0], a[1]);
-        let a_second = convert_cm31_to_limbs(a[2], a[3]);
-        let b_first = convert_cm31_to_limbs(b[0], b[1]);
-        let b_second = convert_cm31_to_limbs(b[2], b[3]);
+    pub fn compute_hint_from_limbs(
+        a_first: &[i32],
+        a_second: &[i32],
+        b_first: &[i32],
+        b_second: &[i32],
+    ) -> Result<QM31MultHint> {
+        assert_eq!(a_first.len(), 8);
+        assert_eq!(a_second.len(), 8);
+        assert_eq!(b_first.len(), 8);
+        assert_eq!(b_second.len(), 8);
 
         let a_first_b_first = CM31Mult::compute_hint_from_limbs(
             &a_first[0..4],
@@ -146,6 +148,18 @@ impl QM31Mult {
             h2: a_second_b_second,
             h3: a_first_b_first,
         })
+    }
+
+    pub fn compute_hint(a: &[u32], b: &[u32]) -> Result<QM31MultHint> {
+        assert_eq!(a.len(), 4);
+        assert_eq!(b.len(), 4);
+
+        let a_first = convert_cm31_to_limbs(a[0], a[1]);
+        let a_second = convert_cm31_to_limbs(a[2], a[3]);
+        let b_first = convert_cm31_to_limbs(b[0], b[1]);
+        let b_second = convert_cm31_to_limbs(b[2], b[3]);
+
+        Self::compute_hint_from_limbs(&a_first, &a_second, &b_first, &b_second)
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::cm31::{CM31Mult, CM31MultGadget};
+use crate::dsl::m31::m31_to_limbs_gadget;
 use crate::treepp::*;
-use crate::utils::{check_limb_format, convert_cm31_from_limbs, OP_256MUL, OP_HINT};
+use crate::utils::convert_cm31_from_limbs;
 use anyhow::Error;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
@@ -34,41 +35,9 @@ pub fn cm31_to_limbs_gadget(_: &[usize]) -> Result<Script> {
     // Input: cm31
     // Output: eight limbs
     Ok(script! {
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-
-        OP_256MUL
-        OP_ADD
-        OP_256MUL
-        OP_ADD
-        OP_256MUL
-        OP_ADD
-
-        OP_EQUALVERIFY
-
-        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
-        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
-        OP_2SWAP
-
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-        OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
-
-        OP_256MUL
-        OP_ADD
-        OP_256MUL
-        OP_ADD
-        OP_256MUL
-        OP_ADD
-        5 OP_ROLL
-        OP_EQUALVERIFY
-
-        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
-        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
-        OP_2SWAP
+        { m31_to_limbs_gadget(&[])? }
+        4 OP_ROLL
+        { m31_to_limbs_gadget(&[])? }
     })
 }
 
@@ -86,14 +55,11 @@ pub fn cm31_limbs_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<Functio
     }
 }
 
-pub fn cm31_equalverify_gadget(_: &[usize]) -> Result<Script> {
+pub fn cm31_limbs_equalverify_gadget(_: &[usize]) -> Result<Script> {
     Ok(script! {
-        8 OP_ROLL OP_EQUALVERIFY
-        7 OP_ROLL OP_EQUALVERIFY
-        6 OP_ROLL OP_EQUALVERIFY
-        5 OP_ROLL OP_EQUALVERIFY
-        4 OP_ROLL OP_EQUALVERIFY
-        3 OP_ROLL OP_EQUALVERIFY
+        for i in (3..=8).rev() {
+            { i } OP_ROLL OP_EQUALVERIFY
+        }
         OP_ROT OP_EQUALVERIFY
         OP_EQUALVERIFY
     })
@@ -145,7 +111,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
         "cm31_limbs_equalverify",
         FunctionMetadata {
             trace_generator: cm31_limbs_equalverify,
-            script_generator: cm31_equalverify_gadget,
+            script_generator: cm31_limbs_equalverify_gadget,
             input: vec!["cm31_limbs", "cm31_limbs"],
             output: vec![],
         },

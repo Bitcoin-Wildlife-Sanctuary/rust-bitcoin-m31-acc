@@ -4,6 +4,8 @@ pub mod m31;
 
 pub mod cm31;
 
+pub mod qm31;
+
 use crate::dsl::table::{push_table, push_table_gadget};
 use bitcoin_script_dsl::dsl::{ElementType, DSL};
 use bitcoin_script_dsl::functions::FunctionMetadata;
@@ -32,4 +34,5 @@ pub fn load_functions(dsl: &mut DSL) {
 
     m31::load_functions(dsl);
     cm31::load_functions(dsl);
+    qm31::load_functions(dsl);
 }
