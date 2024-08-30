@@ -15,9 +15,9 @@ pub fn convert_m31_from_limbs(v: &[i32]) -> u32 {
     (v[0] as u32) + ((v[1] as u32) << 8) + ((v[2] as u32) << 16) + ((v[3] as u32) << 24)
 }
 
-pub fn convert_cm31_to_limbs(real: u32, imag: u32) -> [i32; 8] {
-    let real_limbs = convert_m31_to_limbs(real);
-    let imag_limbs = convert_m31_to_limbs(imag);
+pub fn convert_cm31_to_limbs(cm31: CM31) -> [i32; 8] {
+    let real_limbs = convert_m31_to_limbs(cm31.0 .0);
+    let imag_limbs = convert_m31_to_limbs(cm31.1 .0);
 
     [
         real_limbs[0],
@@ -41,8 +41,8 @@ pub fn convert_qm31_to_limbs(qm31: QM31) -> [i32; 16] {
     let first = qm31.0;
     let second = qm31.1;
 
-    let first_limbs = convert_cm31_to_limbs(first.0 .0, first.1 .0);
-    let second_limbs = convert_cm31_to_limbs(second.0 .0, second.1 .0);
+    let first_limbs = convert_cm31_to_limbs(first);
+    let second_limbs = convert_cm31_to_limbs(second);
 
     [
         first_limbs[0],

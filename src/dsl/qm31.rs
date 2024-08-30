@@ -6,6 +6,7 @@ use anyhow::{Error, Result};
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use itertools::Itertools;
+use rust_bitcoin_m31::qm31_equalverify as raw_qm31_equalverify;
 use stwo_prover::core::fields::qm31::QM31;
 
 pub fn qm31_to_limbs(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -104,6 +105,100 @@ pub fn qm31_limbs_mul_gadget(r: &[usize]) -> Result<Script> {
     Ok(QM31MultGadget::mult(r[0] - 512))
 }
 
+pub fn qm31_limbs_get_first(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "cm31_limbs",
+            Element::ManyNum(a[0..8].to_vec()),
+        )],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_limbs_get_first_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..8 {
+            { r[0] } OP_PICK
+        }
+    })
+}
+
+pub fn qm31_limbs_get_second(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "cm31_limbs",
+            Element::ManyNum(a[8..16].to_vec()),
+        )],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_limbs_get_second_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..8 {
+            { r[0] - 8 } OP_PICK
+        }
+    })
+}
+
+pub fn qm31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+    let b = dsl.get_many_num(inputs[1])?.to_vec();
+
+    if a != b {
+        Err(Error::msg("Equalverify fails"))
+    } else {
+        Ok(FunctionOutput {
+            new_elements: vec![],
+            new_hints: vec![],
+        })
+    }
+}
+
+pub fn qm31_equalverify_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_qm31_equalverify
+    })
+}
+
+pub fn qm31_first(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new("cm31", Element::ManyNum(vec![a[2], a[3]]))],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_first_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..2 {
+            { r[0] - 2 } OP_PICK
+        }
+    })
+}
+
+pub fn qm31_second(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new("cm31", Element::ManyNum(vec![a[0], a[1]]))],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_second_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..2 {
+            { r[0] } OP_PICK
+        }
+    })
+}
+
 pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
     vec![
         v.1 .1 .0 as i32,
@@ -137,16 +232,63 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
         FunctionMetadata {
             trace_generator: qm31_limbs_mul,
             script_generator: qm31_limbs_mul_gadget,
-            input: vec!["table", "qm31_limbs", "qm31_limbs"],
+            input: vec!["&table", "qm31_limbs", "qm31_limbs"],
             output: vec!["qm31"],
         },
     );
+    dsl.add_function(
+        "qm31_limbs_first",
+        FunctionMetadata {
+            trace_generator: qm31_limbs_get_first,
+            script_generator: qm31_limbs_get_first_gadget,
+            input: vec!["&qm31_limbs"],
+            output: vec!["cm31_limbs"],
+        },
+    );
+    dsl.add_function(
+        "qm31_limbs_second",
+        FunctionMetadata {
+            trace_generator: qm31_limbs_get_second,
+            script_generator: qm31_limbs_get_second_gadget,
+            input: vec!["&qm31_limbs"],
+            output: vec!["cm31_limbs"],
+        },
+    );
+    dsl.add_function(
+        "qm31_equalverify",
+        FunctionMetadata {
+            trace_generator: qm31_equalverify,
+            script_generator: qm31_equalverify_gadget,
+            input: vec!["qm31", "qm31"],
+            output: vec![],
+        },
+    );
+    dsl.add_function(
+        "qm31_first",
+        FunctionMetadata {
+            trace_generator: qm31_first,
+            script_generator: qm31_first_gadget,
+            input: vec!["&qm31"],
+            output: vec!["cm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_second",
+        FunctionMetadata {
+            trace_generator: qm31_second,
+            script_generator: qm31_second_gadget,
+            input: vec!["&qm31"],
+            output: vec!["cm31"],
+        },
+    )
 }
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::cm31::reformat_cm31_to_dsl_element;
+    use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
-    use crate::utils::convert_qm31_to_limbs;
+    use crate::utils::{convert_cm31_to_limbs, convert_qm31_to_limbs};
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
@@ -240,6 +382,125 @@ mod test {
                 expected.0 .0 .0 as i32
             ]
         );
+
+        let expected = dsl
+            .alloc_constant(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(expected)),
+            )
+            .unwrap();
+        let _ = dsl
+            .execute("qm31_equalverify", &[res[0], expected])
+            .unwrap();
+
+        test_program(dsl).unwrap()
+    }
+
+    #[test]
+    fn test_qm31_limbs_get_first_and_second() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a = (0..4)
+            .map(|_| prng.gen_range(0u32..((1 << 31) - 1)))
+            .collect_vec();
+
+        let a_qm31 = QM31::from_u32_unchecked(a[0], a[1], a[2], a[3]);
+
+        let a_first_cm31 = a_qm31.0;
+        let a_second_cm31 = a_qm31.1;
+
+        let a_limbs = convert_qm31_to_limbs(a_qm31);
+        let a_first_limbs = convert_cm31_to_limbs(a_first_cm31);
+        let a_second_limbs = convert_cm31_to_limbs(a_second_cm31);
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input("qm31_limbs", Element::ManyNum(a_limbs.to_vec()))
+            .unwrap();
+
+        let a_first = dsl.execute("qm31_limbs_first", &[a]).unwrap()[0];
+        let a_second = dsl.execute("qm31_limbs_second", &[a]).unwrap()[0];
+
+        assert_eq!(dsl.get_many_num(a_first).unwrap(), a_first_limbs);
+        assert_eq!(dsl.get_many_num(a_second).unwrap(), a_second_limbs);
+
+        let expected_first = dsl
+            .alloc_constant("cm31_limbs", Element::ManyNum(a_first_limbs.to_vec()))
+            .unwrap();
+        let _ = dsl
+            .execute("cm31_limbs_equalverify", &[a_first, expected_first])
+            .unwrap();
+
+        let expected_second = dsl
+            .alloc_constant("cm31_limbs", Element::ManyNum(a_second_limbs.to_vec()))
+            .unwrap();
+        let _ = dsl
+            .execute("cm31_limbs_equalverify", &[a_second, expected_second])
+            .unwrap();
+
+        test_program(dsl).unwrap()
+    }
+
+    #[test]
+    fn test_qm31_get_first_and_second() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a = (0..4)
+            .map(|_| prng.gen_range(0u32..((1 << 31) - 1)))
+            .collect_vec();
+
+        let a_qm31 = QM31::from_u32_unchecked(a[0], a[1], a[2], a[3]);
+
+        let a_first_cm31 = a_qm31.0;
+        let a_second_cm31 = a_qm31.1;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(a_qm31)),
+            )
+            .unwrap();
+
+        let a_first = dsl.execute("qm31_first", &[a]).unwrap()[0];
+        let a_second = dsl.execute("qm31_second", &[a]).unwrap()[0];
+
+        assert_eq!(
+            dsl.get_many_num(a_first).unwrap(),
+            reformat_cm31_to_dsl_element(a_first_cm31)
+        );
+        assert_eq!(
+            dsl.get_many_num(a_second).unwrap(),
+            reformat_cm31_to_dsl_element(a_second_cm31)
+        );
+
+        let expected_first = dsl
+            .alloc_constant(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(a_first_cm31)),
+            )
+            .unwrap();
+        let _ = dsl
+            .execute("cm31_equalverify", &[a_first, expected_first])
+            .unwrap();
+
+        let expected_second = dsl
+            .alloc_constant(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(a_second_cm31)),
+            )
+            .unwrap();
+        let _ = dsl
+            .execute("cm31_equalverify", &[a_second, expected_second])
+            .unwrap();
 
         test_program(dsl).unwrap()
     }

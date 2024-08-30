@@ -11,9 +11,12 @@ bitcoin = "0.32.0"
 bitcoin-scriptexec = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-scriptexec", features = ["debug"] }
 anyhow = "1.0.86"
 rust-bitcoin-m31 = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-m31" }
-stwo-prover = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo", branch = "dev" }
+stwo-prover = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo" }
 itertools = "0.10.5"
 bitcoin-script-dsl =  { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/dsl" }
+
+[dev-dependencies]
+bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark" }
 
 [features]
 assume-op-cat = []

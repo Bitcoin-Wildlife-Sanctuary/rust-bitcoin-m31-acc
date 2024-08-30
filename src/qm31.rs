@@ -7,6 +7,7 @@ use rust_bitcoin_m31::{
     cm31_add, cm31_copy, cm31_double, cm31_dup, cm31_fromaltstack, cm31_rot, cm31_sub, cm31_swap,
     cm31_toaltstack, m31_neg,
 };
+use stwo_prover::core::fields::cm31::CM31;
 
 pub struct QM31MultGadget;
 
@@ -154,10 +155,10 @@ impl QM31Mult {
         assert_eq!(a.len(), 4);
         assert_eq!(b.len(), 4);
 
-        let a_first = convert_cm31_to_limbs(a[0], a[1]);
-        let a_second = convert_cm31_to_limbs(a[2], a[3]);
-        let b_first = convert_cm31_to_limbs(b[0], b[1]);
-        let b_second = convert_cm31_to_limbs(b[2], b[3]);
+        let a_first = convert_cm31_to_limbs(CM31::from_u32_unchecked(a[0], a[1]));
+        let a_second = convert_cm31_to_limbs(CM31::from_u32_unchecked(a[2], a[3]));
+        let b_first = convert_cm31_to_limbs(CM31::from_u32_unchecked(b[0], b[1]));
+        let b_second = convert_cm31_to_limbs(CM31::from_u32_unchecked(b[2], b[3]));
 
         Self::compute_hint_from_limbs(&a_first, &a_second, &b_first, &b_second)
     }

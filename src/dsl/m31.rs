@@ -4,8 +4,6 @@ use crate::utils::{
     check_limb_format, convert_m31_from_limbs, convert_m31_to_limbs, OP_256MUL, OP_HINT,
 };
 use anyhow::{Error, Result};
-use bitcoin::opcodes::all::OP_FROMALTSTACK;
-use bitcoin::opcodes::Ordinary::{OP_EQUALVERIFY, OP_SWAP};
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use rust_bitcoin_m31::push_m31_one;
@@ -69,7 +67,7 @@ pub fn m31_limbs_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<Function
     }
 }
 
-pub fn m31_equalverify_gadget(_: &[usize]) -> Result<Script> {
+pub fn m31_limbs_equalverify_gadget(_: &[usize]) -> Result<Script> {
     Ok(script! {
         4 OP_ROLL OP_EQUALVERIFY
         3 OP_ROLL OP_EQUALVERIFY
@@ -140,6 +138,26 @@ pub fn m31_limbs_inverse_gadget(r: &[usize]) -> Result<Script> {
     })
 }
 
+pub fn m31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_num(inputs[0])?;
+    let b = dsl.get_num(inputs[1])?;
+
+    if a != b {
+        Err(Error::msg("Equalverify fails"))
+    } else {
+        Ok(FunctionOutput {
+            new_elements: vec![],
+            new_hints: vec![],
+        })
+    }
+}
+
+pub fn m31_equalverify_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        OP_EQUALVERIFY
+    })
+}
+
 pub(crate) fn load_functions(dsl: &mut DSL) {
     dsl.add_function(
         "m31_to_limbs",
@@ -154,7 +172,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
         "m31_limbs_equalverify",
         FunctionMetadata {
             trace_generator: m31_limbs_equalverify,
-            script_generator: m31_equalverify_gadget,
+            script_generator: m31_limbs_equalverify_gadget,
             input: vec!["m31_limbs", "m31_limbs"],
             output: vec![],
         },
@@ -164,7 +182,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
         FunctionMetadata {
             trace_generator: m31_limbs_mul,
             script_generator: m31_limbs_mul_gadget,
-            input: vec!["table", "m31_limbs", "m31_limbs"],
+            input: vec!["&table", "m31_limbs", "m31_limbs"],
             output: vec!["m31"],
         },
     );
@@ -173,10 +191,19 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
         FunctionMetadata {
             trace_generator: m31_limbs_inverse,
             script_generator: m31_limbs_inverse_gadget,
-            input: vec!["table", "m31_limbs"],
+            input: vec!["&table", "m31_limbs"],
             output: vec!["m31_limbs"],
         },
     );
+    dsl.add_function(
+        "m31_equalverify",
+        FunctionMetadata {
+            trace_generator: m31_equalverify,
+            script_generator: m31_equalverify_gadget,
+            input: vec!["m31", "m31"],
+            output: vec![],
+        },
+    )
 }
 
 #[cfg(test)]
@@ -252,6 +279,9 @@ mod test {
         assert_eq!(res.len(), 1);
         assert_eq!(dsl.get_num(res[0]).unwrap(), r as i32);
 
+        let expected = dsl.alloc_constant("m31", Element::Num(r as i32)).unwrap();
+        let _ = dsl.execute("m31_equalverify", &[res[0], expected]).unwrap();
+
         test_program(dsl).unwrap();
     }
 
@@ -280,6 +310,16 @@ mod test {
             dsl.get_many_num(res[0]).unwrap(),
             convert_m31_to_limbs(inv.0)
         );
+
+        let expected = dsl
+            .alloc_constant(
+                "m31_limbs",
+                Element::ManyNum(convert_m31_to_limbs(inv.0).to_vec()),
+            )
+            .unwrap();
+        let _ = dsl
+            .execute("m31_limbs_equalverify", &[res[0], expected])
+            .unwrap();
 
         test_program(dsl).unwrap();
     }

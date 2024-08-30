@@ -13,7 +13,7 @@ use bitcoin_script_dsl::dsl::{ElementType, DSL};
 use bitcoin_script_dsl::functions::FunctionMetadata;
 
 pub fn load_data_types(dsl: &mut DSL) {
-    dsl.add_ref_only_data_type("table", ElementType::ManyNum((1 << 9) + 1));
+    dsl.add_data_type("table", ElementType::ManyNum((1 << 9) + 1));
     dsl.add_data_type("m31_limbs", ElementType::ManyNum(4));
     dsl.add_data_type("cm31_limbs", ElementType::ManyNum(8));
     dsl.add_data_type("qm31_limbs", ElementType::ManyNum(16));

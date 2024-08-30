@@ -246,8 +246,11 @@ mod test {
             let b_real = prng.gen_range(0u32..((1 << 31) - 1));
             let b_imag = prng.gen_range(0u32..((1 << 31) - 1));
 
-            let a_limbs = convert_cm31_to_limbs(a_real, a_imag);
-            let b_limbs = convert_cm31_to_limbs(b_real, b_imag);
+            let a_cm31 = CM31::from_u32_unchecked(a_real, a_imag);
+            let b_cm31 = CM31::from_u32_unchecked(b_real, b_imag);
+
+            let a_limbs = convert_cm31_to_limbs(a_cm31);
+            let b_limbs = convert_cm31_to_limbs(b_cm31);
 
             let sum_limbs = CM31Limbs::add_limbs(&a_limbs, &b_limbs);
 
