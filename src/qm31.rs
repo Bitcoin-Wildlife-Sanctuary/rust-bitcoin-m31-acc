@@ -1,8 +1,8 @@
 use crate::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget, CM31MultHint};
-use crate::treepp::pushable::{Builder, Pushable};
-use crate::treepp::*;
 use crate::utils::convert_cm31_to_limbs;
 use anyhow::Result;
+use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
+use bitcoin_circle_stark::treepp::*;
 use rust_bitcoin_m31::{
     cm31_add, cm31_copy, cm31_double, cm31_dup, cm31_fromaltstack, cm31_rot, cm31_sub, cm31_swap,
     cm31_toaltstack, m31_neg,
@@ -184,8 +184,8 @@ mod test {
     use crate::qm31::{QM31Mult, QM31MultGadget};
     use crate::report_bitcoin_script_size;
     use crate::table::get_table;
-    use crate::treepp::*;
     use crate::utils::convert_m31_to_limbs;
+    use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use itertools::Itertools;
     use rand::{Rng, SeedableRng};

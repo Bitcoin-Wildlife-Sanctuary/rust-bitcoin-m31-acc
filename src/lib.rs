@@ -1,12 +1,3 @@
-/// The treepp implementation.
-pub(crate) mod treepp {
-    pub use bitcoin_script::{define_pushable, script};
-
-    define_pushable!();
-
-    pub use bitcoin::ScriptBuf as Script;
-}
-
 pub fn report_bitcoin_script_size(category: &str, name: &str, script_size_bytes: usize) {
     println!("{}.{} = {} bytes", category, name, script_size_bytes);
 }

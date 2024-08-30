@@ -1,9 +1,9 @@
 use crate::cm31::{CM31Mult, CM31MultGadget};
 use crate::dsl::m31::m31_to_limbs_gadget;
-use crate::treepp::*;
 use crate::utils::{check_limb_format, convert_cm31_from_limbs, convert_cm31_to_limbs, OP_HINT};
 use anyhow::Error;
 use anyhow::Result;
+use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use rust_bitcoin_m31::{
@@ -249,9 +249,9 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use crate::utils::convert_cm31_to_limbs;
+    use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
@@ -284,17 +284,15 @@ mod test {
             convert_cm31_to_limbs(a_cm31)
         );
 
-        let expected = dsl
-            .alloc_constant(
-                "cm31_limbs",
-                Element::ManyNum(convert_cm31_to_limbs(a_cm31).to_vec()),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_limbs_equalverify", &[res[0], expected])
-            .unwrap();
+        dsl.set_program_output("cm31_limbs", res[0]).unwrap();
 
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                { convert_cm31_to_limbs(a_cm31).to_vec() }
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -335,17 +333,15 @@ mod test {
             &[expected.1 .0 as i32, expected.0 .0 as i32]
         );
 
-        let expected = dsl
-            .alloc_constant(
-                "cm31",
-                Element::ManyNum(reformat_cm31_to_dsl_element(expected)),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_equalverify", &[res[0], expected])
-            .unwrap();
+        dsl.set_program_output("cm31", res[0]).unwrap();
 
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                { expected }
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -379,16 +375,14 @@ mod test {
             convert_cm31_to_limbs(inv)
         );
 
-        let expected = dsl
-            .alloc_constant(
-                "cm31_limbs",
-                Element::ManyNum(convert_cm31_to_limbs(inv).to_vec()),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_limbs_equalverify", &[res[0], expected])
-            .unwrap();
+        dsl.set_program_output("cm31_limbs", res[0]).unwrap();
 
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                { convert_cm31_to_limbs(inv).to_vec() }
+            },
+        )
+        .unwrap();
     }
 }

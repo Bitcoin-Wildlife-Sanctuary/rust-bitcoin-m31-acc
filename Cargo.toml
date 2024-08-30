@@ -14,8 +14,6 @@ rust-bitcoin-m31 = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-b
 stwo-prover = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo" }
 itertools = "0.10.5"
 bitcoin-script-dsl =  { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/dsl" }
-
-[dev-dependencies]
 bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark" }
 
 [features]

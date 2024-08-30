@@ -1,8 +1,8 @@
 use crate::dsl::cm31::cm31_to_limbs_gadget;
 use crate::qm31::{QM31Mult, QM31MultGadget};
-use crate::treepp::*;
 use crate::utils::convert_qm31_from_limbs;
 use anyhow::{Error, Result};
+use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use itertools::Itertools;
@@ -289,6 +289,7 @@ mod test {
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use crate::utils::{convert_cm31_to_limbs, convert_qm31_to_limbs};
+    use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
@@ -325,17 +326,15 @@ mod test {
             convert_qm31_to_limbs(a_qm31)
         );
 
-        let expected = dsl
-            .alloc_constant(
-                "qm31_limbs",
-                Element::ManyNum(convert_qm31_to_limbs(a_qm31).to_vec()),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("qm31_limbs_equalverify", &[res[0], expected])
-            .unwrap();
+        dsl.set_program_output("qm31_limbs", res[0]).unwrap();
 
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                { convert_qm31_to_limbs(a_qm31).to_vec() }
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -383,17 +382,15 @@ mod test {
             ]
         );
 
-        let expected = dsl
-            .alloc_constant(
-                "qm31",
-                Element::ManyNum(reformat_qm31_to_dsl_element(expected)),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("qm31_equalverify", &[res[0], expected])
-            .unwrap();
+        dsl.set_program_output("qm31", res[0]).unwrap();
 
-        test_program(dsl).unwrap()
+        test_program(
+            dsl,
+            script! {
+                { expected }
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -428,21 +425,17 @@ mod test {
         assert_eq!(dsl.get_many_num(a_first).unwrap(), a_first_limbs);
         assert_eq!(dsl.get_many_num(a_second).unwrap(), a_second_limbs);
 
-        let expected_first = dsl
-            .alloc_constant("cm31_limbs", Element::ManyNum(a_first_limbs.to_vec()))
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_limbs_equalverify", &[a_first, expected_first])
-            .unwrap();
+        dsl.set_program_output("cm31_limbs", a_first).unwrap();
+        dsl.set_program_output("cm31_limbs", a_second).unwrap();
 
-        let expected_second = dsl
-            .alloc_constant("cm31_limbs", Element::ManyNum(a_second_limbs.to_vec()))
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_limbs_equalverify", &[a_second, expected_second])
-            .unwrap();
-
-        test_program(dsl).unwrap()
+        test_program(
+            dsl,
+            script! {
+                { a_first_limbs.to_vec() }
+                { a_second_limbs.to_vec() }
+            },
+        )
+        .unwrap()
     }
 
     #[test]
@@ -482,26 +475,16 @@ mod test {
             reformat_cm31_to_dsl_element(a_second_cm31)
         );
 
-        let expected_first = dsl
-            .alloc_constant(
-                "cm31",
-                Element::ManyNum(reformat_cm31_to_dsl_element(a_first_cm31)),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_equalverify", &[a_first, expected_first])
-            .unwrap();
+        dsl.set_program_output("cm31", a_first).unwrap();
+        dsl.set_program_output("cm31", a_second).unwrap();
 
-        let expected_second = dsl
-            .alloc_constant(
-                "cm31",
-                Element::ManyNum(reformat_cm31_to_dsl_element(a_second_cm31)),
-            )
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_equalverify", &[a_second, expected_second])
-            .unwrap();
-
-        test_program(dsl).unwrap()
+        test_program(
+            dsl,
+            script! {
+                { a_first_cm31 }
+                { a_second_cm31 }
+            },
+        )
+        .unwrap()
     }
 }

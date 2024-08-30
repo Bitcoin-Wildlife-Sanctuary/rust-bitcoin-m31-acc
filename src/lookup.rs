@@ -1,4 +1,4 @@
-use crate::treepp::*;
+use bitcoin_circle_stark::treepp::*;
 
 pub struct Lookup8BitGadget;
 
@@ -54,8 +54,9 @@ impl Lookup8BitGadget {
 #[cfg(test)]
 mod test {
     use crate::lookup::Lookup8BitGadget;
+    use crate::report_bitcoin_script_size;
     use crate::table::get_table;
-    use crate::{report_bitcoin_script_size, treepp::*};
+    use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};

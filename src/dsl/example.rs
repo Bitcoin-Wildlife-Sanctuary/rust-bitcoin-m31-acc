@@ -121,10 +121,10 @@ pub fn power_alpha_six(dsl: &mut DSL, table: usize, alpha: usize) -> Result<Vec<
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::example::{column_line_coeffs, power_alpha_six, prepare_pair_vanishing};
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
+    use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
@@ -181,29 +181,21 @@ mod test {
 
         let res = column_line_coeffs(&mut dsl, table, y_val, &evals_val).unwrap();
 
-        for (res_entry, expected_entry) in res.iter().zip(expected.iter()) {
-            let expected_a_val = dsl
-                .alloc_constant(
-                    "cm31",
-                    Element::ManyNum(reformat_cm31_to_dsl_element(expected_entry.0)),
-                )
-                .unwrap();
-            let expected_b_val = dsl
-                .alloc_constant(
-                    "cm31",
-                    Element::ManyNum(reformat_cm31_to_dsl_element(expected_entry.1)),
-                )
-                .unwrap();
-
-            let _ = dsl
-                .execute("cm31_equalverify", &[res_entry.0, expected_a_val])
-                .unwrap();
-            let _ = dsl
-                .execute("cm31_equalverify", &[res_entry.1, expected_b_val])
-                .unwrap();
+        for res_entry in res.iter() {
+            dsl.set_program_output("cm31", res_entry.0).unwrap();
+            dsl.set_program_output("cm31", res_entry.1).unwrap();
         }
 
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                for expected_entry in expected.iter() {
+                    { expected_entry.0 }
+                    { expected_entry.1 }
+                }
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -236,27 +228,17 @@ mod test {
 
         let res = prepare_pair_vanishing(&mut dsl, table, x_val, y_val).unwrap();
 
-        let expected_a_val = dsl
-            .alloc_constant(
-                "cm31",
-                Element::ManyNum(reformat_cm31_to_dsl_element(expected.0)),
-            )
-            .unwrap();
-        let expected_b_val = dsl
-            .alloc_constant(
-                "cm31",
-                Element::ManyNum(reformat_cm31_to_dsl_element(expected.1)),
-            )
-            .unwrap();
+        dsl.set_program_output("cm31", res.0).unwrap();
+        dsl.set_program_output("cm31", res.1).unwrap();
 
-        let _ = dsl
-            .execute("cm31_equalverify", &[res.0, expected_a_val])
-            .unwrap();
-        let _ = dsl
-            .execute("cm31_equalverify", &[res.1, expected_b_val])
-            .unwrap();
-
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                { expected.0 }
+                { expected.1 }
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -288,21 +270,20 @@ mod test {
             )
             .unwrap();
         let table = dsl.execute("push_table", &[]).unwrap()[0];
-
         let alpha_powers = power_alpha_six(&mut dsl, table, alpha_val).unwrap();
 
-        for (&alpha_power_entry, &expected_entry) in alpha_powers.iter().zip(expected.iter()) {
-            let tmp = dsl
-                .alloc_constant(
-                    "qm31",
-                    Element::ManyNum(reformat_qm31_to_dsl_element(expected_entry)),
-                )
-                .unwrap();
-            let _ = dsl
-                .execute("qm31_equalverify", &[alpha_power_entry, tmp])
-                .unwrap();
+        for &alpha_power in alpha_powers.iter() {
+            dsl.set_program_output("qm31", alpha_power).unwrap();
         }
 
-        test_program(dsl).unwrap();
+        test_program(
+            dsl,
+            script! {
+                for expected_entry in expected.iter() {
+                    { *expected_entry }
+                }
+            },
+        )
+        .unwrap();
     }
 }

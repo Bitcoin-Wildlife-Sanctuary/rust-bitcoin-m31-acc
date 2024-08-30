@@ -1,4 +1,4 @@
-use crate::treepp::*;
+use bitcoin_circle_stark::treepp::*;
 use stwo_prover::core::fields::cm31::CM31;
 use stwo_prover::core::fields::qm31::QM31;
 

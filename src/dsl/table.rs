@@ -1,6 +1,6 @@
 use crate::table::get_table;
-use crate::treepp::*;
 use anyhow::Result;
+use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::FunctionOutput;
 use itertools::Itertools;

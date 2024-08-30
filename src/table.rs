@@ -1,4 +1,4 @@
-use crate::treepp::pushable::{Builder, Pushable};
+use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
 use std::ops::Index;
 use std::sync::OnceLock;
 
@@ -47,7 +47,7 @@ pub fn get_table() -> &'static Table {
 mod test {
     use crate::report_bitcoin_script_size;
     use crate::table::get_table;
-    use crate::treepp::*;
+    use bitcoin_circle_stark::treepp::*;
     pub use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;

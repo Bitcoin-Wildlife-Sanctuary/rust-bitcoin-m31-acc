@@ -34,9 +34,9 @@
 // - r = t
 
 use crate::lookup::Lookup8BitGadget;
-use crate::treepp::*;
 use crate::utils::{convert_m31_to_limbs, OP_256MUL, OP_HINT};
 use anyhow::{Error, Result};
+use bitcoin_circle_stark::treepp::*;
 
 pub struct M31Mult;
 
@@ -412,8 +412,8 @@ mod test {
     use crate::m31::{M31Limbs, M31LimbsGadget, M31Mult, M31MultGadget};
     use crate::report_bitcoin_script_size;
     use crate::table::get_table;
-    use crate::treepp::*;
     use crate::utils::convert_m31_to_limbs;
+    use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
