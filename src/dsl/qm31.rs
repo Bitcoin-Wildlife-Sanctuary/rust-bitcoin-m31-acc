@@ -6,7 +6,12 @@ use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use itertools::Itertools;
-use rust_bitcoin_m31::qm31_equalverify as raw_qm31_equalverify;
+use num_traits::One;
+use rust_bitcoin_m31::{
+    m31_add_n31, m31_sub, push_m31_one, push_n31_one, qm31_add as raw_qm31_add,
+    qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg,
+};
+use std::ops::{Add, Neg, Sub};
 use stwo_prover::core::fields::qm31::QM31;
 
 pub fn qm31_to_limbs(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -199,6 +204,77 @@ pub fn qm31_second_gadget(r: &[usize]) -> Result<Script> {
     })
 }
 
+pub fn qm31_1add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(a.add(QM31::one()))),
+        )],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_1add_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        push_n31_one
+        m31_add_n31
+    })
+}
+
+pub fn qm31_1sub(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(a.sub(QM31::one()))),
+        )],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_1sub_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        push_m31_one
+        m31_sub
+    })
+}
+
+pub fn qm31_neg(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(a.neg())),
+        )],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_neg_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_qm31_neg
+    })
+}
+
+pub fn qm31_add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+    let b = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[1])?);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(a + b)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+pub fn qm31_add_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_qm31_add
+    })
+}
+
 pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
     vec![
         v.1 .1 .0 as i32,
@@ -206,6 +282,10 @@ pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
         v.0 .1 .0 as i32,
         v.0 .0 .0 as i32,
     ]
+}
+
+pub(crate) fn reformat_qm31_from_dsl_element(v: &[i32]) -> QM31 {
+    QM31::from_u32_unchecked(v[3] as u32, v[2] as u32, v[1] as u32, v[0] as u32)
 }
 
 pub(crate) fn load_functions(dsl: &mut DSL) {
@@ -280,6 +360,42 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&qm31"],
             output: vec!["cm31"],
         },
+    );
+    dsl.add_function(
+        "qm31_1add",
+        FunctionMetadata {
+            trace_generator: qm31_1add,
+            script_generator: qm31_1add_gadget,
+            input: vec!["qm31"],
+            output: vec!["qm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_1sub",
+        FunctionMetadata {
+            trace_generator: qm31_1sub,
+            script_generator: qm31_1sub_gadget,
+            input: vec!["qm31"],
+            output: vec!["qm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_neg",
+        FunctionMetadata {
+            trace_generator: qm31_neg,
+            script_generator: qm31_neg_gadget,
+            input: vec!["qm31"],
+            output: vec!["qm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_add",
+        FunctionMetadata {
+            trace_generator: qm31_add,
+            script_generator: qm31_add_gadget,
+            input: vec!["qm31", "qm31"],
+            output: vec!["qm31"],
+        },
     )
 }
 
@@ -293,8 +409,10 @@ mod test {
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
+    use num_traits::One;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
+    use std::ops::{Add, Neg, Sub};
     use stwo_prover::core::fields::qm31::QM31;
 
     #[test]
@@ -315,7 +433,7 @@ mod test {
         let a = dsl
             .alloc_constant(
                 "qm31",
-                Element::ManyNum(vec![a[3] as i32, a[2] as i32, a[1] as i32, a[0] as i32]),
+                Element::ManyNum(reformat_qm31_to_dsl_element(a_qm31)),
             )
             .unwrap();
         let res = dsl.execute("qm31_to_limbs", &[a]).unwrap();
@@ -483,6 +601,104 @@ mod test {
             script! {
                 { a_first_cm31 }
                 { a_second_cm31 }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_qm31_1add_1sub_neg() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+        let a = (0..4)
+            .map(|_| prng.gen_range(0u32..((1 << 31) - 1)))
+            .collect_vec();
+
+        let a = QM31::from_u32_unchecked(a[0], a[1], a[2], a[3]);
+
+        let a_1add = a.add(QM31::one());
+        let a_1sub = a.sub(QM31::one());
+        let a_neg = a.neg();
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(a)))
+            .unwrap();
+
+        let a_1add_var = dsl.execute("qm31_1add", &[a_var]).unwrap()[0];
+        let a_1sub_var = dsl.execute("qm31_1sub", &[a_var]).unwrap()[0];
+        let a_neg_var = dsl.execute("qm31_neg", &[a_var]).unwrap()[0];
+
+        assert_eq!(
+            dsl.get_many_num(a_1add_var).unwrap(),
+            reformat_qm31_to_dsl_element(a_1add)
+        );
+        assert_eq!(
+            dsl.get_many_num(a_1sub_var).unwrap(),
+            reformat_qm31_to_dsl_element(a_1sub)
+        );
+        assert_eq!(
+            dsl.get_many_num(a_neg_var).unwrap(),
+            reformat_qm31_to_dsl_element(a_neg)
+        );
+
+        dsl.set_program_output("qm31", a_1add_var).unwrap();
+        dsl.set_program_output("qm31", a_1sub_var).unwrap();
+        dsl.set_program_output("qm31", a_neg_var).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { a_1add }
+                { a_1sub }
+                { a_neg }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_qm31_add() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+        let a = (0..4)
+            .map(|_| prng.gen_range(0u32..((1 << 31) - 1)))
+            .collect_vec();
+        let b = (0..4)
+            .map(|_| prng.gen_range(0u32..((1 << 31) - 1)))
+            .collect_vec();
+
+        let a = QM31::from_u32_unchecked(a[0], a[1], a[2], a[3]);
+        let b = QM31::from_u32_unchecked(b[0], b[1], b[2], b[3]);
+
+        let sum = a + b;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(a)))
+            .unwrap();
+        let b_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(b)))
+            .unwrap();
+
+        let res_var = dsl.execute("qm31_add", &[a_var, b_var]).unwrap()[0];
+        assert_eq!(
+            dsl.get_many_num(res_var).unwrap(),
+            reformat_qm31_to_dsl_element(sum)
+        );
+
+        dsl.set_program_output("qm31", res_var).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { sum }
             },
         )
         .unwrap()
