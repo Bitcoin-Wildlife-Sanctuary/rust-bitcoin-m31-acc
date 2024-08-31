@@ -1,4 +1,4 @@
-use crate::dsl::cm31::cm31_to_limbs_gadget;
+use crate::dsl::cm31::{cm31_to_limbs_gadget, reformat_cm31_from_dsl_element};
 use crate::qm31::{QM31Mult, QM31MultGadget};
 use crate::utils::convert_qm31_from_limbs;
 use anyhow::{Error, Result};
@@ -6,12 +6,13 @@ use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use itertools::Itertools;
-use num_traits::One;
+use num_traits::{One, Zero};
 use rust_bitcoin_m31::{
-    m31_add_n31, m31_sub, push_m31_one, push_n31_one, qm31_add as raw_qm31_add,
+    cm31_add, m31_add_n31, m31_sub, push_m31_one, push_n31_one, qm31_add as raw_qm31_add,
     qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg, qm31_sub as raw_qm31_sub,
 };
 use std::ops::{Add, Neg, Sub};
+use stwo_prover::core::fields::cm31::CM31;
 use stwo_prover::core::fields::qm31::QM31;
 
 pub fn qm31_to_limbs(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -312,6 +313,27 @@ fn qm31_from_first_and_second_gadget(_: &[usize]) -> Result<Script> {
     })
 }
 
+fn qm31_add_cm31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let qm31 = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+    let cm31 = reformat_cm31_from_dsl_element(dsl.get_many_num(inputs[1])?);
+
+    let res = qm31.add(QM31(cm31, CM31::zero()));
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(res)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn qm31_add_cm31_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        cm31_add
+    })
+}
+
 pub fn qm31_mul_m31_limbs(
     dsl: &mut DSL,
     table: usize,
@@ -507,6 +529,15 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "cm31"],
             output: vec!["qm31"],
         },
+    );
+    dsl.add_function(
+        "qm31_add_cm31",
+        FunctionMetadata {
+            trace_generator: qm31_add_cm31,
+            script_generator: qm31_add_cm31_gadget,
+            input: vec!["qm31", "cm31"],
+            output: vec!["qm31"],
+        },
     )
 }
 
@@ -521,7 +552,7 @@ mod test {
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
-    use num_traits::One;
+    use num_traits::{One, Zero};
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use std::ops::{Add, Neg, Sub};
@@ -896,6 +927,48 @@ mod test {
         let table = dsl.execute("push_table", &[]).unwrap()[0];
 
         let res = qm31_mul_cm31_limbs(&mut dsl, table, qm31_var, cm31_limbs_var).unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(expected)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { expected }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_qm31_add_cm31_limbs() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let qm31 = get_rand_qm31(&mut prng);
+        let cm31 = CM31(M31::reduce(prng.next_u64()), M31::reduce(prng.next_u64()));
+
+        let expected = qm31.add(QM31(cm31, CM31::zero()));
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let qm31_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
+            .unwrap();
+        let cm31_var = dsl
+            .alloc_input(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(cm31).to_vec()),
+            )
+            .unwrap();
+
+        let res = dsl.execute("qm31_add_cm31", &[qm31_var, cm31_var]).unwrap()[0];
 
         assert_eq!(
             dsl.get_many_num(res).unwrap(),

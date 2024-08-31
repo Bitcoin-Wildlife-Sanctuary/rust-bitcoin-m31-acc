@@ -276,6 +276,10 @@ pub(crate) fn reformat_cm31_to_dsl_element(v: CM31) -> Vec<i32> {
     vec![v.1 .0 as i32, v.0 .0 as i32]
 }
 
+pub(crate) fn reformat_cm31_from_dsl_element(v: &[i32]) -> CM31 {
+    CM31::from_u32_unchecked(v[1] as u32, v[0] as u32)
+}
+
 pub(crate) fn load_functions(dsl: &mut DSL) {
     dsl.add_function(
         "cm31_to_limbs",
