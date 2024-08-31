@@ -348,6 +348,26 @@ pub fn qm31_mul_m31_limbs(
     Ok(res)
 }
 
+pub fn qm31_mul_cm31_limbs(
+    dsl: &mut DSL,
+    table: usize,
+    qm31: usize,
+    cm31_limbs: usize,
+) -> Result<usize> {
+    let first = dsl.execute("qm31_first", &[qm31])?[0];
+    let second = dsl.execute("qm31_second", &[qm31])?[0];
+
+    let first_limbs = dsl.execute("cm31_to_limbs", &[first])?[0];
+    let first_res = dsl.execute("cm31_limbs_mul", &[table, first_limbs, cm31_limbs])?[0];
+
+    let second_limbs = dsl.execute("cm31_to_limbs", &[second])?[0];
+    let second_res = dsl.execute("cm31_limbs_mul", &[table, second_limbs, cm31_limbs])?[0];
+
+    let res = dsl.execute("qm31_from_first_and_second", &[first_res, second_res])?[0];
+
+    Ok(res)
+}
+
 pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
     vec![
         v.1 .1 .0 as i32,
@@ -493,7 +513,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 #[cfg(test)]
 mod test {
     use crate::dsl::cm31::reformat_cm31_to_dsl_element;
-    use crate::dsl::qm31::{qm31_mul_m31_limbs, reformat_qm31_to_dsl_element};
+    use crate::dsl::qm31::{qm31_mul_cm31_limbs, qm31_mul_m31_limbs, reformat_qm31_to_dsl_element};
     use crate::dsl::{load_data_types, load_functions};
     use crate::utils::{convert_cm31_to_limbs, convert_m31_to_limbs, convert_qm31_to_limbs};
     use bitcoin_circle_stark::treepp::*;
@@ -505,6 +525,7 @@ mod test {
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use std::ops::{Add, Neg, Sub};
+    use stwo_prover::core::fields::cm31::CM31;
     use stwo_prover::core::fields::m31::M31;
     use stwo_prover::core::fields::qm31::QM31;
 
@@ -832,6 +853,49 @@ mod test {
         let table = dsl.execute("push_table", &[]).unwrap()[0];
 
         let res = qm31_mul_m31_limbs(&mut dsl, table, qm31_var, m31_limbs_var).unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(expected)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { expected }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_qm31_mul_cm31_limbs() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let qm31 = get_rand_qm31(&mut prng);
+        let cm31 = CM31(M31::reduce(prng.next_u64()), M31::reduce(prng.next_u64()));
+
+        let expected = qm31.mul_cm31(cm31);
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let qm31_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
+            .unwrap();
+        let cm31_limbs_var = dsl
+            .alloc_input(
+                "cm31_limbs",
+                Element::ManyNum(convert_cm31_to_limbs(cm31).to_vec()),
+            )
+            .unwrap();
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = qm31_mul_cm31_limbs(&mut dsl, table, qm31_var, cm31_limbs_var).unwrap();
 
         assert_eq!(
             dsl.get_many_num(res).unwrap(),
