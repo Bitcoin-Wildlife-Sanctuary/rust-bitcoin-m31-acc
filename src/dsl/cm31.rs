@@ -186,6 +186,92 @@ fn cm31_sub_gadget(_: &[usize]) -> Result<Script> {
     })
 }
 
+fn cm31_limbs_real(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "m31_limbs",
+            Element::ManyNum(a[0..4].to_vec()),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_limbs_real_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..4 {
+            { r[0] } OP_PICK
+        }
+    })
+}
+
+fn cm31_limbs_imag(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "m31_limbs",
+            Element::ManyNum(a[4..8].to_vec()),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_limbs_imag_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..4 {
+            { r[0] - 4 } OP_PICK
+        }
+    })
+}
+
+fn cm31_real(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new("m31", Element::Num(a[1]))],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_real_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        { r[0] - 1 } OP_PICK
+    })
+}
+
+fn cm31_imag(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new("m31", Element::Num(a[0]))],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_imag_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        { r[0] } OP_PICK
+    })
+}
+
+fn cm31_from_real_and_imag(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_num(inputs[0])?;
+    let b = dsl.get_num(inputs[1])?;
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new("cm31", Element::ManyNum(vec![b, a]))],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_from_real_and_imag_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        OP_SWAP
+    })
+}
+
 pub(crate) fn reformat_cm31_to_dsl_element(v: CM31) -> Vec<i32> {
     vec![v.1 .0 as i32, v.0 .0 as i32]
 }
@@ -244,13 +330,59 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "cm31"],
             output: vec!["cm31"],
         },
+    );
+    dsl.add_function(
+        "cm31_limbs_real",
+        FunctionMetadata {
+            trace_generator: cm31_limbs_real,
+            script_generator: cm31_limbs_real_gadget,
+            input: vec!["&cm31_limbs"],
+            output: vec!["m31_limbs"],
+        },
+    );
+    dsl.add_function(
+        "cm31_limbs_imag",
+        FunctionMetadata {
+            trace_generator: cm31_limbs_imag,
+            script_generator: cm31_limbs_imag_gadget,
+            input: vec!["&cm31_limbs"],
+            output: vec!["m31_limbs"],
+        },
+    );
+    dsl.add_function(
+        "cm31_real",
+        FunctionMetadata {
+            trace_generator: cm31_real,
+            script_generator: cm31_real_gadget,
+            input: vec!["&cm31"],
+            output: vec!["m31"],
+        },
+    );
+    dsl.add_function(
+        "cm31_imag",
+        FunctionMetadata {
+            trace_generator: cm31_imag,
+            script_generator: cm31_imag_gadget,
+            input: vec!["&cm31"],
+            output: vec!["m31"],
+        },
+    );
+    dsl.add_function(
+        "cm31_from_real_and_imag",
+        FunctionMetadata {
+            trace_generator: cm31_from_real_and_imag,
+            script_generator: cm31_from_real_and_imag_gadget,
+            input: vec!["m31", "m31"],
+            output: vec!["cm31"],
+        },
     )
 }
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
-    use crate::utils::convert_cm31_to_limbs;
+    use crate::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
@@ -384,5 +516,140 @@ mod test {
             },
         )
         .unwrap();
+    }
+
+    #[test]
+    fn test_cm31_limbs_real_and_imag() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a_real = prng.gen_range(0u32..((1 << 31) - 1));
+        let a_imag = prng.gen_range(0u32..((1 << 31) - 1));
+
+        let a_cm31 = CM31::from_u32_unchecked(a_real, a_imag);
+
+        let a_real_m31 = a_cm31.0;
+        let a_imag_m31 = a_cm31.1;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input(
+                "cm31_limbs",
+                Element::ManyNum(convert_cm31_to_limbs(a_cm31).to_vec()),
+            )
+            .unwrap();
+
+        let a_real = dsl.execute("cm31_limbs_real", &[a]).unwrap()[0];
+        let a_imag = dsl.execute("cm31_limbs_imag", &[a]).unwrap()[0];
+
+        assert_eq!(
+            dsl.get_many_num(a_real).unwrap(),
+            convert_m31_to_limbs(a_real_m31.0)
+        );
+        assert_eq!(
+            dsl.get_many_num(a_imag).unwrap(),
+            convert_m31_to_limbs(a_imag_m31.0)
+        );
+
+        dsl.set_program_output("m31_limbs", a_real).unwrap();
+        dsl.set_program_output("m31_limbs", a_imag).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { convert_m31_to_limbs(a_real_m31.0).to_vec() }
+                { convert_m31_to_limbs(a_imag_m31.0).to_vec() }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_cm31_real_and_imag() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a_real = prng.gen_range(0u32..((1 << 31) - 1));
+        let a_imag = prng.gen_range(0u32..((1 << 31) - 1));
+
+        let a_cm31 = CM31::from_u32_unchecked(a_real, a_imag);
+
+        let a_real_m31 = a_cm31.0;
+        let a_imag_m31 = a_cm31.1;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(a_cm31).to_vec()),
+            )
+            .unwrap();
+
+        let a_real = dsl.execute("cm31_real", &[a]).unwrap()[0];
+        let a_imag = dsl.execute("cm31_imag", &[a]).unwrap()[0];
+
+        assert_eq!(dsl.get_num(a_real).unwrap(), a_real_m31.0 as i32);
+        assert_eq!(dsl.get_num(a_imag).unwrap(), a_imag_m31.0 as i32);
+
+        dsl.set_program_output("m31", a_real).unwrap();
+        dsl.set_program_output("m31", a_imag).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { a_real_m31 }
+                { a_imag_m31 }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_cm31_from_real_and_imag() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a_real = prng.gen_range(0u32..((1 << 31) - 1));
+        let a_imag = prng.gen_range(0u32..((1 << 31) - 1));
+
+        let a_cm31 = CM31::from_u32_unchecked(a_real, a_imag);
+
+        let a_real_m31 = a_cm31.0;
+        let a_imag_m31 = a_cm31.1;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input("m31", Element::Num(a_real_m31.0 as i32))
+            .unwrap();
+
+        let b = dsl
+            .alloc_input("m31", Element::Num(a_imag_m31.0 as i32))
+            .unwrap();
+
+        let cm31 = dsl.execute("cm31_from_real_and_imag", &[a, b]).unwrap()[0];
+
+        assert_eq!(
+            dsl.get_many_num(cm31).unwrap(),
+            reformat_cm31_to_dsl_element(a_cm31)
+        );
+
+        dsl.set_program_output("cm31", cm31).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { a_cm31 }
+            },
+        )
+        .unwrap()
     }
 }

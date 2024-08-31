@@ -27,8 +27,6 @@ pub fn load_data_types(dsl: &mut DSL) {
     dsl.add_data_type("m31", ElementType::Num);
     dsl.add_data_type("cm31", ElementType::ManyNum(2));
     dsl.add_data_type("qm31", ElementType::ManyNum(4));
-    dsl.add_data_type("m31_point", ElementType::ManyNum(2));
-    dsl.add_data_type("qm31_point", ElementType::ManyNum(8));
     dsl.add_data_type("hash", ElementType::Str);
 
     dsl.add_data_type("internal", ElementType::Str);
