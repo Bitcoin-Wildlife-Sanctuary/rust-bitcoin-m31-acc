@@ -9,7 +9,9 @@ use itertools::Itertools;
 use num_traits::{One, Zero};
 use rust_bitcoin_m31::{
     cm31_add, m31_add_n31, m31_sub, push_m31_one, push_n31_one, qm31_add as raw_qm31_add,
-    qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg, qm31_sub as raw_qm31_sub,
+    qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg,
+    qm31_shift_by_i as raw_qm31_shift_by_i, qm31_shift_by_ij as raw_qm31_shift_by_ij,
+    qm31_shift_by_j as raw_qm31_shift_by_j, qm31_sub as raw_qm31_sub,
 };
 use std::ops::{Add, Neg, Sub};
 use stwo_prover::core::fields::cm31::CM31;
@@ -390,6 +392,63 @@ pub fn qm31_mul_cm31_limbs(
     Ok(res)
 }
 
+fn qm31_shift_by_i(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let qm31 = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+
+    let res = qm31 * QM31::from_u32_unchecked(0, 1, 0, 0);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(res)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn qm31_shift_by_i_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_qm31_shift_by_i
+    })
+}
+
+fn qm31_shift_by_j(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let qm31 = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+
+    let res = qm31 * QM31::from_u32_unchecked(0, 0, 1, 0);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(res)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn qm31_shift_by_j_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_qm31_shift_by_j
+    })
+}
+
+fn qm31_shift_by_ij(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let qm31 = reformat_qm31_from_dsl_element(dsl.get_many_num(inputs[0])?);
+
+    let res = qm31 * QM31::from_u32_unchecked(0, 0, 0, 1);
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "qm31",
+            Element::ManyNum(reformat_qm31_to_dsl_element(res)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn qm31_shift_by_ij_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_qm31_shift_by_ij
+    })
+}
+
 pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
     vec![
         v.1 .1 .0 as i32,
@@ -536,6 +595,33 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             trace_generator: qm31_add_cm31,
             script_generator: qm31_add_cm31_gadget,
             input: vec!["qm31", "cm31"],
+            output: vec!["qm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_shift_by_i",
+        FunctionMetadata {
+            trace_generator: qm31_shift_by_i,
+            script_generator: qm31_shift_by_i_gadget,
+            input: vec!["qm31"],
+            output: vec!["qm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_shift_by_j",
+        FunctionMetadata {
+            trace_generator: qm31_shift_by_j,
+            script_generator: qm31_shift_by_j_gadget,
+            input: vec!["qm31"],
+            output: vec!["qm31"],
+        },
+    );
+    dsl.add_function(
+        "qm31_shift_by_ij",
+        FunctionMetadata {
+            trace_generator: qm31_shift_by_ij,
+            script_generator: qm31_shift_by_ij_gadget,
+            input: vec!["qm31"],
             output: vec!["qm31"],
         },
     )
@@ -981,6 +1067,57 @@ mod test {
             dsl,
             script! {
                 { expected }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_qm31_shift_by_i_j_ij() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let qm31 = get_rand_qm31(&mut prng);
+        let qm31_shift_by_i = qm31 * QM31::from_u32_unchecked(0, 1, 0, 0);
+        let qm31_shift_by_j = qm31 * QM31::from_u32_unchecked(0, 0, 1, 0);
+        let qm31_shift_by_ij = qm31 * QM31::from_u32_unchecked(0, 0, 0, 1);
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let qm31_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
+            .unwrap();
+
+        let qm31_shift_by_i_var = dsl.execute("qm31_shift_by_i", &[qm31_var]).unwrap()[0];
+        let qm31_shift_by_j_var = dsl.execute("qm31_shift_by_j", &[qm31_var]).unwrap()[0];
+        let qm31_shift_by_ij_var = dsl.execute("qm31_shift_by_ij", &[qm31_var]).unwrap()[0];
+
+        assert_eq!(
+            dsl.get_many_num(qm31_shift_by_i_var).unwrap(),
+            reformat_qm31_to_dsl_element(qm31_shift_by_i)
+        );
+        assert_eq!(
+            dsl.get_many_num(qm31_shift_by_j_var).unwrap(),
+            reformat_qm31_to_dsl_element(qm31_shift_by_j)
+        );
+        assert_eq!(
+            dsl.get_many_num(qm31_shift_by_ij_var).unwrap(),
+            reformat_qm31_to_dsl_element(qm31_shift_by_ij)
+        );
+
+        dsl.set_program_output("qm31", qm31_shift_by_i_var).unwrap();
+        dsl.set_program_output("qm31", qm31_shift_by_j_var).unwrap();
+        dsl.set_program_output("qm31", qm31_shift_by_ij_var)
+            .unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { qm31_shift_by_i }
+                { qm31_shift_by_j }
+                { qm31_shift_by_ij }
             },
         )
         .unwrap()
