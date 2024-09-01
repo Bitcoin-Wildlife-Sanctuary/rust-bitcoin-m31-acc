@@ -4,7 +4,10 @@ use anyhow::Result;
 use bitcoin_circle_stark::channel::{ChannelWithHint, Sha256ChannelGadget};
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
+use bitcoin_script_dsl::functions::{
+    FunctionMetadata, FunctionOutput, FunctionWithOptionsMetadata,
+};
+use bitcoin_script_dsl::options::Options;
 use stwo_prover::core::channel::{Channel, Sha256Channel};
 use stwo_prover::core::vcs::sha256_hash::{Sha256Hash, Sha256Hasher};
 
@@ -79,6 +82,46 @@ pub fn mix_felt_gadget(_: &[usize]) -> Result<Script> {
     })
 }
 
+fn draw_8_numbers(dsl: &mut DSL, inputs: &[usize], options: &Options) -> Result<FunctionOutput> {
+    let logn = options.get_u32("logn")? as usize;
+
+    let old_channel_digest = dsl.get_str(inputs[0])?.to_vec();
+
+    let mut channel = Sha256Channel::default();
+    channel.update_digest(Sha256Hash::from(old_channel_digest));
+
+    let (queries, hints) = channel.draw_queries_and_hints(8, logn);
+    assert_eq!(hints.0.len(), 8);
+    assert!(hints.1.is_empty());
+
+    let mut new_elements = vec![];
+    new_elements.push(MemoryEntry::new(
+        "hash",
+        Element::Str(channel.digest().as_ref().to_vec()),
+    ));
+    for query in queries {
+        new_elements.push(MemoryEntry::new("position", Element::Num(query as i32)));
+    }
+
+    let new_hints = draw_hints_to_memory_entries(hints);
+
+    Ok(FunctionOutput {
+        new_elements,
+        new_hints,
+    })
+}
+
+fn draw_8_numbers_gadget(_: &[usize], options: &Options) -> Result<Script> {
+    let logn = options.get_u32("logn")? as usize;
+
+    Ok(script! {
+        { Sha256ChannelGadget::draw_numbers_with_hint(8, logn) }
+        for _ in 0..8 {
+            8 OP_ROLL
+        }
+    })
+}
+
 pub(crate) fn load_functions(dsl: &mut DSL) {
     dsl.add_function(
         "mix_digest",
@@ -106,16 +149,30 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "qm31"],
             output: vec!["hash"],
         },
-    )
+    );
+    dsl.add_function(
+        "draw_8_numbers",
+        FunctionWithOptionsMetadata {
+            trace_generator: draw_8_numbers,
+            script_generator: draw_8_numbers_gadget,
+            input: vec!["hash"],
+            output: vec![
+                "hash", "position", "position", "position", "position", "position", "position",
+                "position", "position",
+            ],
+        },
+    );
 }
 
 #[cfg(test)]
 mod test {
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
+    use bitcoin_circle_stark::channel::ChannelWithHint;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
+    use bitcoin_script_dsl::options::Options;
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
@@ -242,6 +299,59 @@ mod test {
             dsl,
             script! {
                 { after }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_draw_8_numbers() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let mut init_state = [0u8; 32];
+        init_state.iter_mut().for_each(|v| *v = prng.gen());
+        let init_state = Sha256Hash::from(init_state.to_vec());
+
+        let mut channel = Sha256Channel::default();
+        channel.update_digest(init_state);
+
+        let (numbers, _) = channel.draw_queries_and_hints(8, 12);
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let old_channel_digest = dsl
+            .alloc_input("hash", Element::Str(init_state.as_ref().to_vec()))
+            .unwrap();
+        let res = dsl
+            .execute_with_options(
+                "draw_8_numbers",
+                &[old_channel_digest],
+                &Options::new().with_u32("logn", 12),
+            )
+            .unwrap();
+
+        assert_eq!(dsl.get_str(res[0]).unwrap(), channel.digest().as_ref());
+        assert_eq!(res.len(), numbers.len() + 1);
+
+        for (&idx, &number) in res.iter().skip(1).zip(numbers.iter()) {
+            assert_eq!(dsl.get_num(idx).unwrap(), number as i32);
+        }
+
+        dsl.set_program_output("hash", res[0]).unwrap();
+        for &idx in res.iter().skip(1) {
+            dsl.set_program_output("position", idx).unwrap();
+        }
+
+        test_program(
+            dsl,
+            script! {
+                { channel.digest.as_ref().to_vec() }
+                for number in numbers {
+                    { number }
+                }
             },
         )
         .unwrap()

@@ -17,7 +17,9 @@ pub fn draw_hints_to_memory_entries(hint: DrawHints) -> Vec<MemoryEntry> {
         };
         new_hints.push(MemoryEntry::new("internal", Element::Str(data)));
     }
-    new_hints.push(MemoryEntry::new("internal", Element::Str(hint.1)));
+    if !hint.1.is_empty() {
+        new_hints.push(MemoryEntry::new("internal", Element::Str(hint.1)));
+    }
 
     new_hints
 }

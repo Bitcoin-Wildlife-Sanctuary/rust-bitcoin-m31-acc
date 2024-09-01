@@ -29,6 +29,8 @@ pub fn load_data_types(dsl: &mut DSL) {
     dsl.add_data_type("qm31", ElementType::ManyNum(4));
     dsl.add_data_type("hash", ElementType::Str);
 
+    dsl.add_data_type("position", ElementType::Num);
+
     dsl.add_data_type("internal", ElementType::Str);
 }
 
