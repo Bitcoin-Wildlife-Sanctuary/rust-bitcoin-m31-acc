@@ -1,4 +1,5 @@
 use crate::cm31::{CM31Mult, CM31MultGadget};
+use crate::decompose::DecomposeGadget;
 use crate::dsl::m31::m31_to_limbs_gadget;
 use crate::utils::{check_limb_format, convert_cm31_from_limbs, convert_cm31_to_limbs, OP_HINT};
 use anyhow::Error;
@@ -7,9 +8,11 @@ use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use rust_bitcoin_m31::{
-    cm31_equalverify as raw_cm31_equalverify, cm31_sub as raw_cm31_sub, push_cm31_one,
+    cm31_add as raw_cm31_add, cm31_equalverify as raw_cm31_equalverify, cm31_sub as raw_cm31_sub,
+    m31_add, push_cm31_one,
 };
 use stwo_prover::core::fields::cm31::CM31;
+use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::fields::FieldExpOps;
 
 fn cm31_to_limbs(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -142,6 +145,24 @@ fn cm31_limbs_inverse_gadget(r: &[usize]) -> Result<Script> {
     })
 }
 
+fn cm31_recompose(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = convert_cm31_from_limbs(dsl.get_many_num(inputs[0])?);
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "cm31",
+            Element::ManyNum(reformat_cm31_to_dsl_element(a)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_recompose_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        { DecomposeGadget::recompose_cm31() }
+    })
+}
+
 fn cm31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
     let a = dsl.get_many_num(inputs[0])?.to_vec();
     let b = dsl.get_many_num(inputs[1])?.to_vec();
@@ -159,6 +180,54 @@ fn cm31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 fn cm31_equalverify_gadget(_: &[usize]) -> Result<Script> {
     Ok(script! {
         raw_cm31_equalverify
+    })
+}
+
+fn cm31_add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+    let b = dsl.get_many_num(inputs[1])?.to_vec();
+
+    let a_cm31 = CM31::from_u32_unchecked(a[1] as u32, a[0] as u32);
+    let b_cm31 = CM31::from_u32_unchecked(b[1] as u32, b[0] as u32);
+
+    let res = a_cm31 + b_cm31;
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "cm31",
+            Element::ManyNum(reformat_cm31_to_dsl_element(res)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_add_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        raw_cm31_add
+    })
+}
+
+fn cm31_add_m31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+    let b = dsl.get_num(inputs[1])?;
+
+    let a_cm31 = CM31::from_u32_unchecked(a[1] as u32, a[0] as u32);
+    let b_m31 = M31::from_u32_unchecked(b as u32);
+
+    let res = a_cm31 + b_m31;
+
+    Ok(FunctionOutput {
+        new_elements: vec![MemoryEntry::new(
+            "cm31",
+            Element::ManyNum(reformat_cm31_to_dsl_element(res)),
+        )],
+        new_hints: vec![],
+    })
+}
+
+fn cm31_add_m31_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        m31_add
     })
 }
 
@@ -272,6 +341,24 @@ fn cm31_from_real_and_imag_gadget(_: &[usize]) -> Result<Script> {
     })
 }
 
+pub fn cm31_mul_m31_limbs(
+    dsl: &mut DSL,
+    table: usize,
+    cm31: usize,
+    m31_limbs: usize,
+) -> Result<usize> {
+    let real = dsl.execute("cm31_real", &[cm31])?[0];
+    let imag = dsl.execute("cm31_imag", &[cm31])?[0];
+
+    let real_limbs = dsl.execute("m31_to_limbs", &[real])?[0];
+    let real_res = dsl.execute("m31_limbs_mul", &[table, real_limbs, m31_limbs])?[0];
+
+    let imag_limbs = dsl.execute("m31_to_limbs", &[imag])?[0];
+    let imag_res = dsl.execute("m31_limbs_mul", &[table, imag_limbs, m31_limbs])?[0];
+
+    Ok(dsl.execute("cm31_from_real_and_imag", &[real_res, imag_res])?[0])
+}
+
 pub(crate) fn reformat_cm31_to_dsl_element(v: CM31) -> Vec<i32> {
     vec![v.1 .0 as i32, v.0 .0 as i32]
 }
@@ -318,12 +405,39 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
         },
     );
     dsl.add_function(
+        "cm31_recompose",
+        FunctionMetadata {
+            trace_generator: cm31_recompose,
+            script_generator: cm31_recompose_gadget,
+            input: vec!["cm31_limbs"],
+            output: vec!["cm31"],
+        },
+    );
+    dsl.add_function(
         "cm31_equalverify",
         FunctionMetadata {
             trace_generator: cm31_equalverify,
             script_generator: cm31_equalverify_gadget,
             input: vec!["cm31", "cm31"],
             output: vec![],
+        },
+    );
+    dsl.add_function(
+        "cm31_add",
+        FunctionMetadata {
+            trace_generator: cm31_add,
+            script_generator: cm31_add_gadget,
+            input: vec!["cm31", "cm31"],
+            output: vec!["cm31"],
+        },
+    );
+    dsl.add_function(
+        "cm31_add_m31",
+        FunctionMetadata {
+            trace_generator: cm31_add_m31,
+            script_generator: cm31_add_m31_gadget,
+            input: vec!["cm31", "m31"],
+            output: vec!["cm31"],
         },
     );
     dsl.add_function(
@@ -384,15 +498,16 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::cm31::reformat_cm31_to_dsl_element;
+    use crate::dsl::cm31::{cm31_mul_m31_limbs, reformat_cm31_to_dsl_element};
     use crate::dsl::{load_data_types, load_functions};
     use crate::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
-    use rand::{Rng, SeedableRng};
+    use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::fields::cm31::CM31;
+    use stwo_prover::core::fields::m31::M31;
     use stwo_prover::core::fields::FieldExpOps;
 
     #[test]
@@ -652,6 +767,52 @@ mod test {
             dsl,
             script! {
                 { a_cm31 }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_cm31_mul_m31_limbs() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let real = prng.gen_range(0u32..((1 << 31) - 1));
+        let imag = prng.gen_range(0u32..((1 << 31) - 1));
+
+        let cm31 = CM31::from_u32_unchecked(real, imag);
+        let m31 = M31::reduce(prng.next_u64());
+
+        let expected = cm31 * m31;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let cm31_var = dsl
+            .alloc_input("cm31", Element::ManyNum(reformat_cm31_to_dsl_element(cm31)))
+            .unwrap();
+        let m31_limbs_var = dsl
+            .alloc_input(
+                "m31_limbs",
+                Element::ManyNum(convert_m31_to_limbs(m31.0).to_vec()),
+            )
+            .unwrap();
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = cm31_mul_m31_limbs(&mut dsl, table, cm31_var, m31_limbs_var).unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_cm31_to_dsl_element(expected)
+        );
+
+        dsl.set_program_output("cm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { expected }
             },
         )
         .unwrap()

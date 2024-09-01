@@ -1,3 +1,4 @@
+use crate::dsl::cm31::cm31_mul_m31_limbs;
 use crate::dsl::qm31::qm31_mul_cm31_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::DSL;
@@ -78,21 +79,62 @@ pub fn aggregation(
     Ok(res)
 }
 
+pub fn denominator_inverse_limbs_from_prepared(
+    dsl: &mut DSL,
+    table: usize,
+    x_imag_div_y_imag: usize,
+    cross_term: usize,
+    z_x: usize,
+    z_y: usize,
+) -> Result<(usize, usize)> {
+    let cross_term_plus_z_x = dsl.execute("cm31_add_m31", &[cross_term, z_x])?[0];
+
+    let z_y_limbs = dsl.execute("m31_to_limbs", &[z_y])?[0];
+    let x_imag_div_y_imag_times_z_y = cm31_mul_m31_limbs(dsl, table, x_imag_div_y_imag, z_y_limbs)?;
+
+    let result_for_z = dsl.execute(
+        "cm31_sub",
+        &[cross_term_plus_z_x, x_imag_div_y_imag_times_z_y],
+    )?[0];
+    let result_for_conjugated_z = dsl.execute(
+        "cm31_add",
+        &[cross_term_plus_z_x, x_imag_div_y_imag_times_z_y],
+    )?[0];
+
+    let result_for_z_limbs = dsl.execute("cm31_to_limbs", &[result_for_z])?[0];
+    let inverse_for_z_limbs = dsl.execute("cm31_limbs_inverse", &[table, result_for_z_limbs])?[0];
+
+    let result_for_conjugated_z_limbs =
+        dsl.execute("cm31_to_limbs", &[result_for_conjugated_z])?[0];
+    let inverse_for_conjugated_z_limbs = dsl.execute(
+        "cm31_limbs_inverse",
+        &[table, result_for_conjugated_z_limbs],
+    )?[0];
+
+    Ok((inverse_for_z_limbs, inverse_for_conjugated_z_limbs))
+}
+
 #[cfg(test)]
 mod test {
     use crate::dsl::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::example::quotients::{
-        aggregation, DenominatorInversesIndices, NominatorsIndices,
+        aggregation, denominator_inverse_limbs_from_prepared, DenominatorInversesIndices,
+        NominatorsIndices,
     };
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
+    use crate::utils::convert_cm31_to_limbs;
+    use bitcoin_circle_stark::constraints::{
+        fast_twin_pair_vanishing_from_prepared, PreparedPairVanishing,
+    };
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
     use num_traits::Zero;
-    use rand::{RngCore, SeedableRng};
+    use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
+    use stwo_prover::core::circle::{M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN};
     use stwo_prover::core::fields::cm31::CM31;
     use stwo_prover::core::fields::m31::M31;
     use stwo_prover::core::fields::qm31::QM31;
@@ -245,5 +287,82 @@ mod test {
             },
         )
         .unwrap()
+    }
+
+    #[test]
+    fn test_denominator_inverse_from_prepared() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let random_qm31_point = SECURE_FIELD_CIRCLE_GEN.mul(prng.gen());
+        let prepared = PreparedPairVanishing::from(random_qm31_point);
+        let x_imag_div_y_imag = prepared.x_imag_div_y_imag.clone();
+        let cross_term = prepared.cross_term.clone();
+
+        let random_m31_point = M31_CIRCLE_GEN.mul(prng.gen());
+
+        let twin_pair_vanishing_result =
+            fast_twin_pair_vanishing_from_prepared(prepared, random_m31_point);
+
+        let expected = (
+            twin_pair_vanishing_result.0.inverse(),
+            twin_pair_vanishing_result.1.inverse(),
+        );
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let x_imag_div_y_imag_var = dsl
+            .alloc_input(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(x_imag_div_y_imag)),
+            )
+            .unwrap();
+        let cross_term_var = dsl
+            .alloc_input(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(cross_term)),
+            )
+            .unwrap();
+        let z_x = dsl
+            .alloc_input("m31", Element::Num(random_m31_point.x.0 as i32))
+            .unwrap();
+        let z_y = dsl
+            .alloc_input("m31", Element::Num(random_m31_point.y.0 as i32))
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = denominator_inverse_limbs_from_prepared(
+            &mut dsl,
+            table,
+            x_imag_div_y_imag_var,
+            cross_term_var,
+            z_x,
+            z_y,
+        )
+        .unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res.0).unwrap(),
+            convert_cm31_to_limbs(expected.0)
+        );
+        assert_eq!(
+            dsl.get_many_num(res.1).unwrap(),
+            convert_cm31_to_limbs(expected.1)
+        );
+
+        dsl.set_program_output("cm31_limbs", res.0).unwrap();
+        dsl.set_program_output("cm31_limbs", res.1).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { convert_cm31_to_limbs(expected.0).to_vec() }
+                { convert_cm31_to_limbs(expected.1).to_vec() }
+            },
+        )
+        .unwrap();
     }
 }
