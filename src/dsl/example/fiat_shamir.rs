@@ -6,7 +6,6 @@ use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
 use stwo_prover::core::circle::{CirclePoint, Coset};
 use stwo_prover::core::fields::m31::M31;
-use stwo_prover::core::fields::qm31::QM31;
 use stwo_prover::core::fields::FieldExpOps;
 
 pub fn eval_from_partial_evals(
@@ -27,19 +26,70 @@ pub fn eval_from_partial_evals(
     Ok(sum)
 }
 
-pub fn eval_composition_polynomial_at_point(
+pub fn step_constraint_nominator_evaluation(
     dsl: &mut DSL,
     table: usize,
-    alpha: usize,
     f_z: usize,
     f_gz: usize,
     f_g2z: usize,
     z_x: usize,
     z_y: usize,
     log_size: u32,
+) -> Result<usize> {
+    let constraint_zero_domain = Coset::subgroup(log_size);
+
+    let f_z_limbs = dsl.execute("qm31_to_limbs", &[f_z])?[0];
+    let f_z_squared = dsl.execute("qm31_limbs_mul", &[table, f_z_limbs, f_z_limbs])?[0];
+
+    let f_gz_limbs = dsl.execute("qm31_to_limbs", &[f_gz])?[0];
+    let f_gz_squared = dsl.execute("qm31_limbs_mul", &[table, f_gz_limbs, f_gz_limbs])?[0];
+
+    let mut poly = dsl.execute("qm31_add", &[f_z_squared, f_gz_squared])?[0];
+    poly = dsl.execute("qm31_sub", &[poly, f_g2z])?[0];
+
+    let pair_vanisher = pair_vanishing_with_constant_m31_points(
+        dsl,
+        table,
+        z_x,
+        z_y,
+        constraint_zero_domain.at(constraint_zero_domain.size() - 2),
+        constraint_zero_domain.at(constraint_zero_domain.size() - 1),
+    )?;
+
+    let poly_limbs = dsl.execute("qm31_to_limbs", &[poly])?[0];
+    let pair_vanisher_limbs = dsl.execute("qm31_to_limbs", &[pair_vanisher])?[0];
+    let numerator = dsl.execute("qm31_limbs_mul", &[table, poly_limbs, pair_vanisher_limbs])?[0];
+
+    Ok(numerator)
+}
+
+pub fn step_constraint_denominator_inverse_evaluation(
+    dsl: &mut DSL,
+    table: usize,
+    z_x: usize,
+    z_y: usize,
+    log_size: u32,
+) -> Result<usize> {
+    let constraint_zero_domain = Coset::subgroup(log_size);
+
+    let denominator = coset_vanishing(dsl, table, z_x, z_y, constraint_zero_domain)?;
+
+    let denominator_limbs = dsl.execute("qm31_to_limbs", &[denominator])?[0];
+    let denominator_limbs_inverse =
+        dsl.execute("qm31_limbs_inverse", &[table, denominator_limbs])?[0];
+
+    Ok(denominator_limbs_inverse)
+}
+
+pub fn boundary_constraint_evaluation(
+    dsl: &mut DSL,
+    table: usize,
+    f_z: usize,
+    z_x: usize,
+    z_y: usize,
+    log_size: u32,
     claim: M31,
 ) -> Result<usize> {
-    // compute the boundary constraint evaluation
     let constraint_zero_domain = Coset::subgroup(log_size);
     let p = constraint_zero_domain.at(constraint_zero_domain.size() - 1);
 
@@ -61,16 +111,15 @@ pub fn eval_composition_polynomial_at_point(
 
     let numerator_limbs = dsl.execute("qm31_to_limbs", &[numerator])?[0];
     let denominator_limbs = dsl.execute("qm31_to_limbs", &[denominator])?[0];
-    let denominator_limbs_inverse = dsl.execute("qm31_limbs_inverse", &[denominator_limbs])?[0];
+    let denominator_limbs_inverse =
+        dsl.execute("qm31_limbs_inverse", &[table, denominator_limbs])?[0];
 
-    let boundary_res = dsl.execute(
+    let res = dsl.execute(
         "qm31_limbs_mul",
         &[table, numerator_limbs, denominator_limbs_inverse],
     )?[0];
 
-    // compute the step constraint evaluation
-
-    todo!()
+    Ok(res)
 }
 
 pub fn pair_vanishing_with_constant_m31_points(
@@ -127,22 +176,28 @@ pub fn coset_vanishing(
 #[cfg(test)]
 mod test {
     use crate::dsl::example::fiat_shamir::{
-        coset_vanishing, eval_from_partial_evals, pair_vanishing_with_constant_m31_points,
+        boundary_constraint_evaluation, coset_vanishing, eval_from_partial_evals,
+        pair_vanishing_with_constant_m31_points, step_constraint_denominator_inverse_evaluation,
+        step_constraint_nominator_evaluation,
     };
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
+    use crate::utils::convert_qm31_to_limbs;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;
-    use rand::{Rng, SeedableRng};
+    use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::circle::{
-        CirclePoint, Coset, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER,
+        CirclePoint, Coset, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER,
     };
     use stwo_prover::core::constraints::pair_vanishing;
+    use stwo_prover::core::fields::m31::BaseField;
     use stwo_prover::core::fields::qm31::QM31;
+    use stwo_prover::core::fields::FieldExpOps;
+    use stwo_prover::examples::fibonacci::Fibonacci;
 
     #[test]
     fn test_eval_from_partial_evals() {
@@ -280,5 +335,191 @@ mod test {
             },
         )
         .unwrap()
+    }
+
+    #[test]
+    fn test_eval_composition_polynomial_at_point() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let point = SECURE_FIELD_CIRCLE_GEN.mul(prng.gen());
+        let mask = [
+            get_rand_qm31(&mut prng),
+            get_rand_qm31(&mut prng),
+            get_rand_qm31(&mut prng),
+        ];
+
+        let fibonacci_component = Fibonacci::new(10, BaseField::reduce(prng.next_u64()));
+
+        let step_constraint_evaluation_expected = {
+            let constraint_zero_domain = Coset::subgroup(10);
+            let constraint_value = mask[0].square() + mask[1].square() - mask[2];
+            let selector = pair_vanishing(
+                constraint_zero_domain
+                    .at(constraint_zero_domain.size() - 2)
+                    .into_ef(),
+                constraint_zero_domain
+                    .at(constraint_zero_domain.size() - 1)
+                    .into_ef(),
+                point,
+            );
+            let num = constraint_value * selector;
+            let denom =
+                stwo_prover::core::constraints::coset_vanishing(constraint_zero_domain, point);
+
+            (num, denom)
+        };
+        let boundary_constraint_evaluation_expected = fibonacci_component
+            .air
+            .component
+            .boundary_constraint_eval_quotient_by_mask(point, &[mask[0]]);
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let f_z_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(mask[0])),
+            )
+            .unwrap();
+        let f_gz_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(mask[1])),
+            )
+            .unwrap();
+        let f_g2z_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(mask[2])),
+            )
+            .unwrap();
+        let z_x_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.x)),
+            )
+            .unwrap();
+        let z_y_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.y)),
+            )
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = step_constraint_nominator_evaluation(
+            &mut dsl, table, f_z_var, f_gz_var, f_g2z_var, z_x_var, z_y_var, 10,
+        )
+        .unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(step_constraint_evaluation_expected.0)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { step_constraint_evaluation_expected.0 }
+            },
+        )
+        .unwrap();
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let z_x_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.x)),
+            )
+            .unwrap();
+        let z_y_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.y)),
+            )
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res =
+            step_constraint_denominator_inverse_evaluation(&mut dsl, table, z_x_var, z_y_var, 10)
+                .unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            convert_qm31_to_limbs(step_constraint_evaluation_expected.1.inverse())
+        );
+
+        dsl.set_program_output("qm31_limbs", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { convert_qm31_to_limbs(step_constraint_evaluation_expected.1.inverse()).to_vec() }
+            },
+        )
+        .unwrap();
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let f_z_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(mask[0])),
+            )
+            .unwrap();
+        let z_x_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.x)),
+            )
+            .unwrap();
+        let z_y_var = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.y)),
+            )
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = boundary_constraint_evaluation(
+            &mut dsl,
+            table,
+            f_z_var,
+            z_x_var,
+            z_y_var,
+            10,
+            fibonacci_component.air.component.claim,
+        )
+        .unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(boundary_constraint_evaluation_expected)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { boundary_constraint_evaluation_expected }
+            },
+        )
+        .unwrap();
     }
 }

@@ -164,7 +164,6 @@ mod test {
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
-    use std::f32::consts::E;
     use stwo_prover::core::channel::Sha256Channel;
     use stwo_prover::core::circle::{CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN};
     use stwo_prover::core::vcs::sha256_hash::Sha256Hash;

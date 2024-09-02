@@ -1,6 +1,6 @@
 use crate::dsl::cm31::{cm31_mul_m31_limbs, cm31_to_limbs_gadget, reformat_cm31_from_dsl_element};
 use crate::qm31::{QM31Mult, QM31MultGadget};
-use crate::utils::convert_qm31_from_limbs;
+use crate::utils::{check_limb_format, convert_qm31_from_limbs, convert_qm31_to_limbs, OP_HINT};
 use anyhow::{Error, Result};
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
@@ -8,8 +8,8 @@ use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use itertools::Itertools;
 use num_traits::{One, Zero};
 use rust_bitcoin_m31::{
-    cm31_add, m31_add, m31_add_n31, m31_sub, push_m31_one, push_n31_one, qm31_add as raw_qm31_add,
-    qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg,
+    cm31_add, m31_add, m31_add_n31, m31_sub, push_m31_one, push_n31_one, push_qm31_one,
+    qm31_add as raw_qm31_add, qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg,
     qm31_shift_by_i as raw_qm31_shift_by_i, qm31_shift_by_ij as raw_qm31_shift_by_ij,
     qm31_shift_by_j as raw_qm31_shift_by_j, qm31_sub as raw_qm31_sub,
 };
@@ -17,6 +17,7 @@ use std::ops::{Add, Neg, Sub};
 use stwo_prover::core::fields::cm31::CM31;
 use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::fields::qm31::QM31;
+use stwo_prover::core::fields::FieldExpOps;
 
 pub fn qm31_to_limbs(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
     let num = dsl.get_many_num(inputs[0])?;
@@ -451,6 +452,73 @@ fn qm31_shift_by_ij_gadget(_: &[usize]) -> Result<Script> {
     })
 }
 
+fn qm31_limbs_inverse(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[1])?;
+    let a_val = convert_qm31_from_limbs(a);
+
+    let inv = a_val.inverse();
+    let inv_limbs = convert_qm31_to_limbs(inv);
+
+    let hint = QM31Mult::compute_hint_from_limbs(
+        &a[0..8],
+        &a[8..16],
+        &inv_limbs[0..8],
+        &inv_limbs[8..16],
+    )?;
+
+    let output_entry = MemoryEntry::new("qm31_limbs", Element::ManyNum(inv_limbs.to_vec()));
+
+    let mut new_hints = vec![output_entry.clone()];
+    new_hints.extend([hint.h1, hint.h2, hint.h3].iter().flat_map(|x| {
+        vec![
+            MemoryEntry::new("qm31", Element::Num(x.q1)),
+            MemoryEntry::new("qm31", Element::Num(x.q2)),
+            MemoryEntry::new("qm31", Element::Num(x.q3)),
+        ]
+    }));
+
+    Ok(FunctionOutput {
+        new_elements: vec![output_entry],
+        new_hints,
+    })
+}
+
+fn qm31_limbs_inverse_gadget(r: &[usize]) -> Result<Script> {
+    Ok(script! {
+        for _ in 0..16 {
+            OP_HINT check_limb_format OP_DUP OP_TOALTSTACK
+        }
+        { QM31MultGadget::mult(r[0] - 512) }
+        push_qm31_one raw_qm31_equalverify
+
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_2SWAP
+
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_2SWAP
+
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_2SWAP
+
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_FROMALTSTACK OP_FROMALTSTACK OP_SWAP
+        OP_2SWAP
+
+        for _ in 0..4 {
+            7 OP_ROLL
+        }
+        for _ in 0..4 {
+            11 OP_ROLL
+        }
+        for _ in 0..4 {
+            15 OP_ROLL
+        }
+    })
+}
+
 pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
     vec![
         v.1 .1 .0 as i32,
@@ -635,6 +703,15 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
+    );
+    dsl.add_function(
+        "qm31_limbs_inverse",
+        FunctionMetadata {
+            trace_generator: qm31_limbs_inverse,
+            script_generator: qm31_limbs_inverse_gadget,
+            input: vec!["&table", "qm31_limbs"],
+            output: vec!["qm31_limbs"],
+        },
     )
 }
 
@@ -656,6 +733,7 @@ mod test {
     use stwo_prover::core::fields::cm31::CM31;
     use stwo_prover::core::fields::m31::M31;
     use stwo_prover::core::fields::qm31::QM31;
+    use stwo_prover::core::fields::FieldExpOps;
 
     #[test]
     fn test_qm31_to_limbs() {
@@ -1169,5 +1247,44 @@ mod test {
             },
         )
         .unwrap()
+    }
+
+    #[test]
+    fn test_qm31_limbs_inverse() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a = get_rand_qm31(&mut prng);
+        let a_limbs = convert_qm31_to_limbs(a);
+
+        let inv = a.inverse();
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let a = dsl
+            .alloc_input("qm31_limbs", Element::ManyNum(a_limbs.to_vec()))
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = dsl.execute("qm31_limbs_inverse", &[table, a]).unwrap();
+
+        assert_eq!(res.len(), 1);
+        assert_eq!(
+            dsl.get_many_num(res[0]).unwrap(),
+            convert_qm31_to_limbs(inv)
+        );
+
+        dsl.set_program_output("qm31_limbs", res[0]).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { convert_qm31_to_limbs(inv).to_vec() }
+            },
+        )
+        .unwrap();
     }
 }
