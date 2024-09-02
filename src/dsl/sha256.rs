@@ -53,9 +53,7 @@ pub fn draw_felt(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 pub fn draw_felt_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        { Sha256ChannelGadget::draw_felt_with_hint() }
-    })
+    Ok(Sha256ChannelGadget::draw_felt_with_hint())
 }
 
 pub fn mix_felt(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {

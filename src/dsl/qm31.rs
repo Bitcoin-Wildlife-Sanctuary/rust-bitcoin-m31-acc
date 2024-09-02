@@ -170,9 +170,7 @@ pub fn qm31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutpu
 }
 
 pub fn qm31_equalverify_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_equalverify
-    })
+    Ok(raw_qm31_equalverify())
 }
 
 pub fn qm31_first(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -257,9 +255,7 @@ pub fn qm31_neg(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 pub fn qm31_neg_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_neg
-    })
+    Ok(raw_qm31_neg())
 }
 
 pub fn qm31_add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -275,9 +271,7 @@ pub fn qm31_add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 pub fn qm31_add_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_add
-    })
+    Ok(raw_qm31_add())
 }
 
 pub fn qm31_sub(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -293,9 +287,7 @@ pub fn qm31_sub(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 pub fn qm31_sub_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_sub
-    })
+    Ok(raw_qm31_sub())
 }
 
 fn qm31_from_first_and_second(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -333,9 +325,7 @@ fn qm31_add_cm31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn qm31_add_cm31_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        cm31_add
-    })
+    Ok(cm31_add())
 }
 
 fn qm31_add_m31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -354,9 +344,7 @@ fn qm31_add_m31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn qm31_add_m31_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        m31_add
-    })
+    Ok(m31_add())
 }
 
 pub fn qm31_mul_m31_limbs(
@@ -409,9 +397,7 @@ fn qm31_shift_by_i(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn qm31_shift_by_i_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_shift_by_i
-    })
+    Ok(raw_qm31_shift_by_i())
 }
 
 fn qm31_shift_by_j(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -428,9 +414,7 @@ fn qm31_shift_by_j(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn qm31_shift_by_j_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_shift_by_j
-    })
+    Ok(raw_qm31_shift_by_j())
 }
 
 fn qm31_shift_by_ij(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -447,9 +431,7 @@ fn qm31_shift_by_ij(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn qm31_shift_by_ij_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_qm31_shift_by_ij
-    })
+    Ok(raw_qm31_shift_by_ij())
 }
 
 fn qm31_limbs_inverse(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {

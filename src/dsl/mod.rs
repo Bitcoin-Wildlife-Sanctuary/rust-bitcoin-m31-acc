@@ -10,6 +10,8 @@ pub mod sha256;
 
 pub mod point;
 
+pub mod pow;
+
 pub mod example;
 
 pub mod utils;
@@ -49,4 +51,5 @@ pub fn load_functions(dsl: &mut DSL) {
     cm31::load_functions(dsl);
     qm31::load_functions(dsl);
     sha256::load_functions(dsl);
+    pow::load_functions(dsl);
 }

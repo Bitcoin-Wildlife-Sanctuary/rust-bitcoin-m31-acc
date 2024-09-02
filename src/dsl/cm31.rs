@@ -158,9 +158,7 @@ fn cm31_recompose(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn cm31_recompose_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        { DecomposeGadget::recompose_cm31() }
-    })
+    Ok(DecomposeGadget::recompose_cm31())
 }
 
 fn cm31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -178,9 +176,7 @@ fn cm31_equalverify(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn cm31_equalverify_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_cm31_equalverify
-    })
+    Ok(raw_cm31_equalverify())
 }
 
 fn cm31_add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -202,9 +198,7 @@ fn cm31_add(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn cm31_add_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_cm31_add
-    })
+    Ok(raw_cm31_add())
 }
 
 fn cm31_add_m31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -226,9 +220,7 @@ fn cm31_add_m31(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn cm31_add_m31_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        m31_add
-    })
+    Ok(m31_add())
 }
 
 fn cm31_sub(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
@@ -250,9 +242,7 @@ fn cm31_sub(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
 }
 
 fn cm31_sub_gadget(_: &[usize]) -> Result<Script> {
-    Ok(script! {
-        raw_cm31_sub
-    })
+    Ok(raw_cm31_sub())
 }
 
 fn cm31_limbs_real(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
