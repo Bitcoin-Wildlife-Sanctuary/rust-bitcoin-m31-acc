@@ -64,7 +64,7 @@ pub fn column_line_coeffs(
             "cm31_limbs_mul",
             &[table, eval_imag_limbs, y_real_times_y_imag_inv_limbs],
         )?[0];
-        b = dsl.execute("cm31_sub", &[eval_real, b])?[0];
+        b = dsl.execute("cm31_sub", &[b, eval_real])?[0];
 
         ab.push((a, b));
     }
@@ -154,7 +154,7 @@ mod test {
                 let eval_real = eval.0;
 
                 let fp_imag_div_y_imag = eval_imag * y_imag_inverse;
-                let cross_term = eval_real - y_real * fp_imag_div_y_imag;
+                let cross_term = y_real * fp_imag_div_y_imag - eval_real;
 
                 result.push((fp_imag_div_y_imag, cross_term))
             }
