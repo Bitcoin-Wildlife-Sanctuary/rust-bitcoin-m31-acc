@@ -1,3 +1,4 @@
+use crate::dsl::point::{add_constant_m31_point_x_only, point_double_x};
 use crate::dsl::qm31::qm31_mul_m31_limbs;
 use crate::utils::convert_m31_to_limbs;
 use anyhow::Result;
@@ -5,6 +6,7 @@ use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
 use stwo_prover::core::circle::{CirclePoint, Coset};
 use stwo_prover::core::fields::m31::M31;
+use stwo_prover::core::fields::qm31::QM31;
 use stwo_prover::core::fields::FieldExpOps;
 
 pub fn eval_from_partial_evals(
@@ -105,10 +107,27 @@ pub fn pair_vanishing_with_constant_m31_points(
     Ok(sum)
 }
 
+pub fn coset_vanishing(
+    dsl: &mut DSL,
+    table: usize,
+    z_x: usize,
+    z_y: usize,
+    coset: Coset,
+) -> Result<usize> {
+    let shift = -coset.initial + coset.step_size.half().to_point();
+    let mut res = add_constant_m31_point_x_only(dsl, table, z_x, z_y, shift)?;
+
+    for _ in 1..coset.log_size {
+        res = point_double_x(dsl, table, res)?;
+    }
+
+    Ok(res)
+}
+
 #[cfg(test)]
 mod test {
     use crate::dsl::example::fiat_shamir::{
-        eval_from_partial_evals, pair_vanishing_with_constant_m31_points,
+        coset_vanishing, eval_from_partial_evals, pair_vanishing_with_constant_m31_points,
     };
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
@@ -119,7 +138,9 @@ mod test {
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
-    use stwo_prover::core::circle::{CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER};
+    use stwo_prover::core::circle::{
+        CirclePoint, Coset, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER,
+    };
     use stwo_prover::core::constraints::pair_vanishing;
     use stwo_prover::core::fields::qm31::QM31;
 
@@ -202,6 +223,48 @@ mod test {
             &mut dsl, table, z_x_var, z_y_var, excluded0, excluded1,
         )
         .unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(expected)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { expected }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_coset_vanishing() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let z = CirclePoint::get_point(prng.gen::<u128>() % SECURE_FIELD_CIRCLE_ORDER);
+
+        let coset = Coset::subgroup(10);
+
+        let expected = stwo_prover::core::constraints::coset_vanishing(coset, z);
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let z_x_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.x)))
+            .unwrap();
+        let z_y_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.y)))
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = coset_vanishing(&mut dsl, table, z_x_var, z_y_var, coset).unwrap();
 
         assert_eq!(
             dsl.get_many_num(res).unwrap(),
