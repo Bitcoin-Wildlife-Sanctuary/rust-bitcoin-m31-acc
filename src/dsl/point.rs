@@ -97,9 +97,41 @@ pub fn add_constant_m31_point(
     Ok((new_x, new_y))
 }
 
+pub fn point_add_x_only(
+    dsl: &mut DSL,
+    table: usize,
+    x0: usize,
+    y0: usize,
+    x1: usize,
+    y1: usize,
+) -> Result<usize> {
+    let x0_limbs = dsl.execute("qm31_to_limbs", &[x0])?[0];
+    let x1_limbs = dsl.execute("qm31_to_limbs", &[x1])?[0];
+    let x0x1 = dsl.execute("qm31_limbs_mul", &[table, x0_limbs, x1_limbs])?[0];
+
+    let y0_limbs = dsl.execute("qm31_to_limbs", &[y0])?[0];
+    let y1_limbs = dsl.execute("qm31_to_limbs", &[y1])?[0];
+    let y0y1 = dsl.execute("qm31_limbs_mul", &[table, y0_limbs, y1_limbs])?[0];
+
+    let res = dsl.execute("qm31_sub", &[x0x1, y0y1])?[0];
+    Ok(res)
+}
+
+pub fn point_double_x(dsl: &mut DSL, table: usize, x: usize) -> Result<usize> {
+    let x_limbs = dsl.execute("qm31_to_limbs", &[x])?[0];
+    let x_squared = dsl.execute("qm31_limbs_mul", &[table, x_limbs, x_limbs])?[0];
+
+    let mut res = dsl.execute("qm31_add", &[x_squared, x_squared])?[0];
+    res = dsl.execute("qm31_1sub", &[res])?[0];
+
+    Ok(res)
+}
+
 #[cfg(test)]
 mod test {
-    use crate::dsl::point::{add_constant_m31_point, get_random_point};
+    use crate::dsl::point::{
+        add_constant_m31_point, get_random_point, point_add_x_only, point_double_x,
+    };
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
@@ -107,6 +139,7 @@ mod test {
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
+    use std::f32::consts::E;
     use stwo_prover::core::channel::Sha256Channel;
     use stwo_prover::core::circle::{CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN};
     use stwo_prover::core::vcs::sha256_hash::Sha256Hash;
@@ -207,6 +240,104 @@ mod test {
             script! {
                 { expected.x }
                 { expected.y }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_point_add_x_only() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let point_a = SECURE_FIELD_CIRCLE_GEN.mul(prng.gen());
+        let point_b = SECURE_FIELD_CIRCLE_GEN.mul(prng.gen());
+
+        let point_c = point_a + point_b;
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let point_a_x = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point_a.x)),
+            )
+            .unwrap();
+        let point_a_y = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point_a.y)),
+            )
+            .unwrap();
+        let point_b_x = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point_b.x)),
+            )
+            .unwrap();
+        let point_b_y = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point_b.y)),
+            )
+            .unwrap();
+
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res =
+            point_add_x_only(&mut dsl, table, point_a_x, point_a_y, point_b_x, point_b_y).unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(point_c.x)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { point_c.x }
+            },
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_point_double_x() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let point = SECURE_FIELD_CIRCLE_GEN.mul(prng.gen());
+        let point_double = point.double();
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let point_x = dsl
+            .alloc_input(
+                "qm31",
+                Element::ManyNum(reformat_qm31_to_dsl_element(point.x)),
+            )
+            .unwrap();
+        let table = dsl.execute("push_table", &[]).unwrap()[0];
+
+        let res = point_double_x(&mut dsl, table, point_x).unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res).unwrap(),
+            reformat_qm31_to_dsl_element(point_double.x)
+        );
+
+        dsl.set_program_output("qm31", res).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { point_double.x }
             },
         )
         .unwrap()

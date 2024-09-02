@@ -1,11 +1,11 @@
+use crate::dsl::qm31::qm31_mul_m31_limbs;
+use crate::utils::convert_m31_to_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
 use stwo_prover::core::circle::{CirclePoint, Coset};
-use stwo_prover::core::fields::FieldExpOps;
 use stwo_prover::core::fields::m31::M31;
-use crate::dsl::qm31::qm31_mul_m31_limbs;
-use crate::utils::convert_m31_to_limbs;
+use stwo_prover::core::fields::FieldExpOps;
 
 pub fn eval_from_partial_evals(
     dsl: &mut DSL,
@@ -39,15 +39,14 @@ pub fn eval_composition_polynomial_at_point(
 ) -> Result<usize> {
     // compute the boundary constraint evaluation
     let constraint_zero_domain = Coset::subgroup(log_size);
-    let p =constraint_zero_domain.at(constraint_zero_domain.size() - 1);
+    let p = constraint_zero_domain.at(constraint_zero_domain.size() - 1);
 
     // numerator
-    let claim_minus_one_times_p_y_inverse
-        = (claim - M31::one()) * p.y.inverse();
-    let claim_minus_one_times_p_y_inverse_limbs =
-        dsl.alloc_constant("m31_limbs",
-        Element::ManyNum(convert_m31_to_limbs(claim_minus_one_times_p_y_inverse.0).to_vec()))?
-        ;
+    let claim_minus_one_times_p_y_inverse = (claim - M31::one()) * p.y.inverse();
+    let claim_minus_one_times_p_y_inverse_limbs = dsl.alloc_constant(
+        "m31_limbs",
+        Element::ManyNum(convert_m31_to_limbs(claim_minus_one_times_p_y_inverse.0).to_vec()),
+    )?;
 
     let mut linear = qm31_mul_m31_limbs(dsl, table, z_y, claim_minus_one_times_p_y_inverse_limbs)?;
     linear = dsl.execute("qm31_1add", &[linear])?[0];
@@ -55,6 +54,20 @@ pub fn eval_composition_polynomial_at_point(
     let numerator = dsl.execute("qm31_sub", &[f_z, linear])?[0];
 
     // denominator
+    let denominator =
+        pair_vanishing_with_constant_m31_points(dsl, table, z_x, z_y, p, CirclePoint::zero())?;
+
+    let numerator_limbs = dsl.execute("qm31_to_limbs", &[numerator])?[0];
+    let denominator_limbs = dsl.execute("qm31_to_limbs", &[denominator])?[0];
+    let denominator_limbs_inverse = dsl.execute("qm31_limbs_inverse", &[denominator_limbs])?[0];
+
+    let boundary_res = dsl.execute(
+        "qm31_limbs_mul",
+        &[table, numerator_limbs, denominator_limbs_inverse],
+    )?[0];
+
+    // compute the step constraint evaluation
+
     todo!()
 }
 
@@ -69,7 +82,7 @@ pub fn pair_vanishing_with_constant_m31_points(
     let excluded_1_x_minus_excluded_0_x = excluded1.x - excluded0.x;
     let excluded_1_x_minus_excluded_0_x_limbs = dsl.alloc_constant(
         "m31_limbs",
-        Element::ManyNum(convert_m31_to_limbs(excluded_1_x_minus_excluded_0_x.0).to_vec())
+        Element::ManyNum(convert_m31_to_limbs(excluded_1_x_minus_excluded_0_x.0).to_vec()),
     )?;
 
     let z_y_part = qm31_mul_m31_limbs(dsl, table, z_y, excluded_1_x_minus_excluded_0_x_limbs)?;
@@ -77,13 +90,16 @@ pub fn pair_vanishing_with_constant_m31_points(
     let excluded_0_y_minus_excluded_1_y = excluded0.y - excluded1.y;
     let excluded_0_y_minus_excluded_1_y_limbs = dsl.alloc_constant(
         "m31_limbs",
-        Element::ManyNum(convert_m31_to_limbs(excluded_0_y_minus_excluded_1_y.0).to_vec())
+        Element::ManyNum(convert_m31_to_limbs(excluded_0_y_minus_excluded_1_y.0).to_vec()),
     )?;
 
     let z_x_part = qm31_mul_m31_limbs(dsl, table, z_x, excluded_0_y_minus_excluded_1_y_limbs)?;
 
     let mut sum = dsl.execute("qm31_add", &[z_x_part, z_y_part])?[0];
-    let constant = dsl.alloc_constant("m31", Element::Num((excluded0.x * excluded1.y - excluded0.y * excluded1.x).0 as i32))?;
+    let constant = dsl.alloc_constant(
+        "m31",
+        Element::Num((excluded0.x * excluded1.y - excluded0.y * excluded1.x).0 as i32),
+    )?;
     sum = dsl.execute("qm31_add_m31", &[sum, constant])?[0];
 
     Ok(sum)
@@ -91,7 +107,9 @@ pub fn pair_vanishing_with_constant_m31_points(
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::example::fiat_shamir::{eval_from_partial_evals, pair_vanishing_with_constant_m31_points};
+    use crate::dsl::example::fiat_shamir::{
+        eval_from_partial_evals, pair_vanishing_with_constant_m31_points,
+    };
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
@@ -101,7 +119,7 @@ mod test {
     use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
-    use stwo_prover::core::circle::{CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER};
+    use stwo_prover::core::circle::{CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER};
     use stwo_prover::core::constraints::pair_vanishing;
     use stwo_prover::core::fields::qm31::QM31;
 
@@ -171,12 +189,19 @@ mod test {
         load_data_types(&mut dsl);
         load_functions(&mut dsl);
 
-        let z_x_var = dsl.alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.x))).unwrap();
-        let z_y_var = dsl.alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.y))).unwrap();
+        let z_x_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.x)))
+            .unwrap();
+        let z_y_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.y)))
+            .unwrap();
 
         let table = dsl.execute("push_table", &[]).unwrap()[0];
 
-        let res = pair_vanishing_with_constant_m31_points(&mut dsl, table, z_x_var, z_y_var, excluded0, excluded1).unwrap();
+        let res = pair_vanishing_with_constant_m31_points(
+            &mut dsl, table, z_x_var, z_y_var, excluded0, excluded1,
+        )
+        .unwrap();
 
         assert_eq!(
             dsl.get_many_num(res).unwrap(),
@@ -185,8 +210,12 @@ mod test {
 
         dsl.set_program_output("qm31", res).unwrap();
 
-        test_program(dsl, script! {
-            { expected }
-        }).unwrap()
+        test_program(
+            dsl,
+            script! {
+                { expected }
+            },
+        )
+        .unwrap()
     }
 }
