@@ -1,8 +1,7 @@
 use anyhow::{Error, Result};
-use bitcoin_circle_stark::merkle_tree::{
-    MerkleTreePath, MerkleTreeTwinGadget, MerkleTreeTwinProof,
-};
+use bitcoin_circle_stark::merkle_tree::{MerkleTreePath, MerkleTreePathGadget, MerkleTreeTwinGadget, MerkleTreeTwinProof};
 use bitcoin_circle_stark::treepp::*;
+use bitcoin_circle_stark::utils::{limb_to_be_bits_toaltstack_except_lowest_1bit};
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
 use bitcoin_script_dsl::functions::{FunctionOutput, FunctionWithOptionsMetadata};
 use bitcoin_script_dsl::options::Options;
@@ -77,6 +76,60 @@ fn query_and_verify_merkle_twin_tree_gadget<const N: usize>(
     Ok(MerkleTreeTwinGadget::query_and_verify(N, logn))
 }
 
+fn query_and_verify_raw_merkle_tree(dsl: &mut DSL, inputs: &[usize], options: &Options) -> Result<FunctionOutput> {
+    let root_hash = dsl.get_str(inputs[0])?.to_vec();
+    let leaf_hash = dsl.get_str(inputs[1])?.to_vec();
+    let raw_position = dsl.get_num(inputs[2])? as usize;
+
+    let path = options.get_multi_binary("path")?;
+    let logn = options.get_u32("logn")?;
+    let shift = options.get_u32("shift")? as usize;
+
+    if shift < 1 {
+        return Err(Error::msg("Raw Merkle tree always assume at least a shift of 1"));
+    }
+
+    if path.len() != logn as usize - shift {
+        return Err(Error::msg("Merkle tree proof seems to have an incorrect length"));
+    }
+
+    let position = raw_position >> shift;
+
+    let proof = MerkleTreePath {
+        siblings: path.iter().map(|x| Sha256Hash::from(x.as_slice())).collect_vec(),
+    };
+    let depth = path.len();
+
+    let proof_is_valid = proof.verify(&Sha256Hash::from(root_hash.as_slice()), depth, Sha256Hash::from(leaf_hash.as_slice()), position);
+    if !proof_is_valid {
+        return Err(Error::msg("Merkle tree proof is invalid"));
+    }
+
+    Ok(FunctionOutput {
+        new_elements: vec![],
+        new_hints: path.iter().map(|x| MemoryEntry::new("internal", Element::Str(x.clone()))).collect_vec(),
+    })
+}
+
+fn query_and_verify_raw_merkle_tree_gadget(_: &[usize], options: &Options) -> Result<Script> {
+    let logn = options.get_u32("logn")?;
+    let shift = options.get_u32("shift")? as usize;
+    Ok(script! {
+        // push the root hash to the altstack
+        2 OP_ROLL OP_TOALTSTACK
+
+        // perform a bit decomposition
+        { limb_to_be_bits_toaltstack_except_lowest_1bit(logn) }
+        if shift > 1 {
+            for _ in 1..shift {
+                OP_FROMALTSTACK OP_DROP
+            }
+        }
+
+        { MerkleTreePathGadget::verify(logn as usize - shift) }
+    })
+}
+
 pub(crate) fn load_functions(dsl: &mut DSL) {
     dsl.add_function(
         "merkle_twin_tree_1",
@@ -95,13 +148,22 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "position"],
             output: vec!["m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31"],
         },
+    );
+    dsl.add_function(
+        "raw_merkle_tree",
+        FunctionWithOptionsMetadata {
+            trace_generator: query_and_verify_raw_merkle_tree,
+            script_generator: query_and_verify_raw_merkle_tree_gadget,
+            input: vec!["hash", "hash", "position"],
+            output: vec![],
+        }
     )
 }
 
 #[cfg(test)]
 mod test {
     use crate::dsl::{load_data_types, load_functions};
-    use bitcoin_circle_stark::merkle_tree::{MerkleTree, MerkleTreeTwinProof};
+    use bitcoin_circle_stark::merkle_tree::{MerkleTree, MerkleTreePath, MerkleTreeTwinProof};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
@@ -111,6 +173,8 @@ mod test {
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha8Rng;
     use stwo_prover::core::fields::m31::M31;
+    use stwo_prover::core::vcs::ops::MerkleHasher;
+    use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleHasher;
 
     #[test]
     fn test_merkle_twin_tree_4() {
@@ -262,5 +326,73 @@ mod test {
             },
         )
         .unwrap();
+    }
+
+    #[test]
+    fn test_merkle_tree() {
+        let mut prng = ChaCha8Rng::seed_from_u64(0);
+
+        let mut last_layer = vec![];
+        for _ in 0..1 << 12 {
+            let a = get_rand_qm31(&mut prng);
+            last_layer.push(a.to_m31_array().to_vec());
+        }
+
+        let merkle_tree = MerkleTree::new(last_layer.clone());
+
+        let proof = MerkleTreePath::query(&merkle_tree, 100);
+
+        let last_layer_hash = {
+            let left = Sha256MerkleHasher::hash_node(None, last_layer[100].as_slice());
+            let right = Sha256MerkleHasher::hash_node(None, last_layer[101].as_slice());
+            Sha256MerkleHasher::hash_node(Some((left, right)), &[])
+        };
+        assert!(proof.verify(&merkle_tree.root_hash, proof.siblings.len(), last_layer_hash, 100 >> 1));
+
+        let mut dsl = DSL::new();
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let root_hash_var = dsl
+            .alloc_input(
+                "hash",
+                Element::Str(merkle_tree.root_hash.as_ref().to_vec()),
+            )
+            .unwrap();
+        let leaf_hash_var = dsl.alloc_input("hash", Element::Str(last_layer_hash.as_ref().to_vec())).unwrap();
+        let pos_var = dsl
+            .alloc_input("position", Element::Num(100))
+            .unwrap();
+
+        let _ = dsl.execute_with_options(
+            "raw_merkle_tree", &[root_hash_var, leaf_hash_var, pos_var],
+            &Options::new().with_multi_binary("path", proof.siblings.iter().map(|x| x.as_ref().to_vec()).collect_vec())
+                .with_u32("logn", 12).with_u32("shift", 1),
+        ).unwrap();
+
+        test_program(dsl, script!{}).unwrap();
+
+        let mut dsl = DSL::new();
+        load_data_types(&mut dsl);
+        load_functions(&mut dsl);
+
+        let root_hash_var = dsl
+            .alloc_input(
+                "hash",
+                Element::Str(merkle_tree.root_hash.as_ref().to_vec()),
+            )
+            .unwrap();
+        let leaf_hash_var = dsl.alloc_input("hash", Element::Str(last_layer_hash.as_ref().to_vec())).unwrap();
+        let pos_var = dsl
+            .alloc_input("position", Element::Num(100 << 1))
+            .unwrap();
+
+        let _ = dsl.execute_with_options(
+            "raw_merkle_tree", &[root_hash_var, leaf_hash_var, pos_var],
+            &Options::new().with_multi_binary("path", proof.siblings.iter().map(|x| x.as_ref().to_vec()).collect_vec())
+                .with_u32("logn", 13).with_u32("shift", 2),
+        ).unwrap();
+
+        test_program(dsl, script!{}).unwrap();
     }
 }
