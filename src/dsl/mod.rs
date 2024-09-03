@@ -12,6 +12,8 @@ pub mod point;
 
 pub mod pow;
 
+pub mod merkle_tree;
+
 pub mod example;
 
 pub mod utils;
@@ -32,7 +34,6 @@ pub fn load_data_types(dsl: &mut DSL) {
     dsl.add_data_type("hash", ElementType::Str);
 
     dsl.add_data_type("position", ElementType::Num);
-
     dsl.add_data_type("internal", ElementType::Str);
 }
 
@@ -52,4 +53,5 @@ pub fn load_functions(dsl: &mut DSL) {
     qm31::load_functions(dsl);
     sha256::load_functions(dsl);
     pow::load_functions(dsl);
+    merkle_tree::load_functions(dsl);
 }

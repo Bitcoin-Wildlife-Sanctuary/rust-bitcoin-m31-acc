@@ -121,7 +121,7 @@ pub fn apply_twin(
     queried_value_for_z: usize,
     queried_value_for_conjugated_z: usize,
     a: usize,
-    b: usize
+    b: usize,
 ) -> Result<(usize, usize)> {
     let z_y_limbs = dsl.execute("m31_to_limbs", &[z_y])?[0];
     let a_times_z_y = cm31_mul_m31_limbs(dsl, table, a, z_y_limbs)?;
@@ -130,20 +130,27 @@ pub fn apply_twin(
     res_z = dsl.execute("cm31_add_m31", &[res_z, queried_value_for_z])?[0];
 
     let mut res_conjugated_z = dsl.execute("cm31_add", &[b, a_times_z_y])?[0];
-    res_conjugated_z = dsl.execute("cm31_add_m31", &[res_conjugated_z, queried_value_for_conjugated_z])?[0];
+    res_conjugated_z = dsl.execute(
+        "cm31_add_m31",
+        &[res_conjugated_z, queried_value_for_conjugated_z],
+    )?[0];
 
     Ok((res_z, res_conjugated_z))
 }
 
 #[cfg(test)]
 mod test {
-    use std::ops::Neg;
     use crate::dsl::cm31::reformat_cm31_to_dsl_element;
-    use crate::dsl::example::quotients::{aggregation, apply_twin, denominator_inverse_limbs_from_prepared, DenominatorInversesIndices, NominatorsIndices};
+    use crate::dsl::example::quotients::{
+        aggregation, apply_twin, denominator_inverse_limbs_from_prepared,
+        DenominatorInversesIndices, NominatorsIndices,
+    };
     use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use crate::utils::convert_cm31_to_limbs;
-    use bitcoin_circle_stark::constraints::{fast_twin_pair_vanishing_from_prepared, ColumnLineCoeffs, PreparedPairVanishing};
+    use bitcoin_circle_stark::constraints::{
+        fast_twin_pair_vanishing_from_prepared, ColumnLineCoeffs, PreparedPairVanishing,
+    };
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
@@ -151,7 +158,10 @@ mod test {
     use num_traits::Zero;
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
-    use stwo_prover::core::circle::{CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER};
+    use std::ops::Neg;
+    use stwo_prover::core::circle::{
+        CirclePoint, M31_CIRCLE_GEN, SECURE_FIELD_CIRCLE_GEN, SECURE_FIELD_CIRCLE_ORDER,
+    };
     use stwo_prover::core::fields::cm31::CM31;
     use stwo_prover::core::fields::m31::M31;
     use stwo_prover::core::fields::qm31::QM31;
@@ -387,8 +397,7 @@ mod test {
     fn test_apply_twin() {
         let mut prng = ChaCha20Rng::seed_from_u64(0);
 
-        let sample_point =
-            CirclePoint::get_point(prng.gen::<u128>() % SECURE_FIELD_CIRCLE_ORDER);
+        let sample_point = CirclePoint::get_point(prng.gen::<u128>() % SECURE_FIELD_CIRCLE_ORDER);
         let sample_value = get_rand_qm31(&mut prng);
 
         let coeffs = ColumnLineCoeffs::from_values_and_point(&[sample_value], sample_point);
@@ -407,25 +416,60 @@ mod test {
         load_data_types(&mut dsl);
         load_functions(&mut dsl);
 
-        let z_y_var = dsl.alloc_input("m31", Element::Num(query_point.y.0 as i32)).unwrap();
-        let queried_value_for_z_var = dsl.alloc_input("m31", Element::Num(query_value_left.0 as i32)).unwrap();
-        let queried_value_for_conjugated_z_var = dsl.alloc_input("m31", Element::Num(query_value_right.0 as i32)).unwrap();
-        let a_var = dsl.alloc_input("cm31", Element::ManyNum(reformat_cm31_to_dsl_element(coeffs.fp_imag_div_y_imag[0]))).unwrap();
-        let b_var = dsl.alloc_input("cm31", Element::ManyNum(reformat_cm31_to_dsl_element(coeffs.cross_term[0].neg()))).unwrap();
+        let z_y_var = dsl
+            .alloc_input("m31", Element::Num(query_point.y.0 as i32))
+            .unwrap();
+        let queried_value_for_z_var = dsl
+            .alloc_input("m31", Element::Num(query_value_left.0 as i32))
+            .unwrap();
+        let queried_value_for_conjugated_z_var = dsl
+            .alloc_input("m31", Element::Num(query_value_right.0 as i32))
+            .unwrap();
+        let a_var = dsl
+            .alloc_input(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(coeffs.fp_imag_div_y_imag[0])),
+            )
+            .unwrap();
+        let b_var = dsl
+            .alloc_input(
+                "cm31",
+                Element::ManyNum(reformat_cm31_to_dsl_element(coeffs.cross_term[0].neg())),
+            )
+            .unwrap();
 
         let table = dsl.execute("push_table", &[]).unwrap()[0];
 
-        let res = apply_twin(&mut dsl, table, z_y_var, queried_value_for_z_var, queried_value_for_conjugated_z_var, a_var, b_var).unwrap();
+        let res = apply_twin(
+            &mut dsl,
+            table,
+            z_y_var,
+            queried_value_for_z_var,
+            queried_value_for_conjugated_z_var,
+            a_var,
+            b_var,
+        )
+        .unwrap();
 
-        assert_eq!(dsl.get_many_num(res.0).unwrap(), reformat_cm31_to_dsl_element(expected_left[0]));
-        assert_eq!(dsl.get_many_num(res.1).unwrap(), reformat_cm31_to_dsl_element(expected_right[0]));
+        assert_eq!(
+            dsl.get_many_num(res.0).unwrap(),
+            reformat_cm31_to_dsl_element(expected_left[0])
+        );
+        assert_eq!(
+            dsl.get_many_num(res.1).unwrap(),
+            reformat_cm31_to_dsl_element(expected_right[0])
+        );
 
         dsl.set_program_output("cm31", res.0).unwrap();
         dsl.set_program_output("cm31", res.1).unwrap();
 
-        test_program(dsl, script! {
-            { expected_left[0] }
-            { expected_right[0] }
-        }).unwrap()
+        test_program(
+            dsl,
+            script! {
+                { expected_left[0] }
+                { expected_right[0] }
+            },
+        )
+        .unwrap()
     }
 }
