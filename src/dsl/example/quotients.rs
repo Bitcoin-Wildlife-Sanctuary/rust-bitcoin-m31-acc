@@ -140,6 +140,7 @@ pub fn apply_twin(
 
 #[cfg(test)]
 mod test {
+    use crate::algorithms::utils::convert_cm31_to_limbs;
     use crate::dsl::building_blocks::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::example::quotients::{
@@ -147,7 +148,6 @@ mod test {
         DenominatorInversesIndices, NominatorsIndices,
     };
     use crate::dsl::{load_data_types, load_functions};
-    use crate::algorithms::utils::convert_cm31_to_limbs;
     use bitcoin_circle_stark::constraints::{
         fast_twin_pair_vanishing_from_prepared, ColumnLineCoeffs, PreparedPairVanishing,
     };

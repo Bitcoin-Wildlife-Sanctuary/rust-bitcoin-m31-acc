@@ -1,6 +1,6 @@
+use crate::algorithms::utils::convert_m31_to_limbs;
 use crate::dsl::building_blocks::point::{add_constant_m31_point_x_only, point_double_x};
 use crate::dsl::building_blocks::qm31::qm31_mul_m31_limbs;
-use crate::algorithms::utils::convert_m31_to_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
@@ -175,6 +175,7 @@ pub fn coset_vanishing(
 
 #[cfg(test)]
 mod test {
+    use crate::algorithms::utils::convert_qm31_to_limbs;
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::example::fiat_shamir::{
         boundary_constraint_evaluation, coset_vanishing, eval_from_partial_evals,
@@ -183,7 +184,6 @@ mod test {
     };
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
-    use crate::algorithms::utils::convert_qm31_to_limbs;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};

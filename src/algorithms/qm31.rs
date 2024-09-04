@@ -182,9 +182,9 @@ impl Pushable for QM31MultHint {
 #[cfg(test)]
 mod test {
     use crate::algorithms::qm31::{QM31Mult, QM31MultGadget};
-    use crate::report_bitcoin_script_size;
     use crate::algorithms::table::get_table;
     use crate::algorithms::utils::convert_m31_to_limbs;
+    use crate::report_bitcoin_script_size;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use itertools::Itertools;

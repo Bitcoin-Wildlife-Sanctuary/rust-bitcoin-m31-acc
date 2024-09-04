@@ -1,7 +1,9 @@
 use crate::algorithms::cm31::{CM31Mult, CM31MultGadget};
 use crate::algorithms::decompose::DecomposeGadget;
+use crate::algorithms::utils::{
+    check_limb_format, convert_cm31_from_limbs, convert_cm31_to_limbs, OP_HINT,
+};
 use crate::dsl::building_blocks::m31::m31_to_limbs_gadget;
-use crate::algorithms::utils::{check_limb_format, convert_cm31_from_limbs, convert_cm31_to_limbs, OP_HINT};
 use anyhow::Error;
 use anyhow::Result;
 use bitcoin_circle_stark::treepp::*;
@@ -488,9 +490,9 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 
 #[cfg(test)]
 mod test {
+    use crate::algorithms::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use crate::dsl::building_blocks::cm31::{cm31_mul_m31_limbs, reformat_cm31_to_dsl_element};
     use crate::dsl::{load_data_types, load_functions};
-    use crate::algorithms::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::dsl::{Element, DSL};
     use bitcoin_script_dsl::test_program;

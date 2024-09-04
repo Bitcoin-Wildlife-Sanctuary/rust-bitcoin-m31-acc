@@ -45,8 +45,8 @@ pub fn get_table() -> &'static Table {
 
 #[cfg(test)]
 mod test {
-    use crate::report_bitcoin_script_size;
     use crate::algorithms::table::get_table;
+    use crate::report_bitcoin_script_size;
     use bitcoin_circle_stark::treepp::*;
     pub use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};

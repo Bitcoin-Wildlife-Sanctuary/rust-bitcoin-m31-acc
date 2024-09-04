@@ -1,7 +1,7 @@
+use crate::algorithms::utils::convert_m31_to_limbs;
 use crate::dsl::building_blocks::qm31::{
     qm31_mul_m31_limbs, reformat_qm31_from_dsl_element, reformat_qm31_to_dsl_element,
 };
-use crate::algorithms::utils::convert_m31_to_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;

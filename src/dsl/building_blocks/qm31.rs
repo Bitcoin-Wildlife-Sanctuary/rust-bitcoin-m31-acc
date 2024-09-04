@@ -1,8 +1,10 @@
+use crate::algorithms::qm31::{QM31Mult, QM31MultGadget};
+use crate::algorithms::utils::{
+    check_limb_format, convert_qm31_from_limbs, convert_qm31_to_limbs, OP_HINT,
+};
 use crate::dsl::building_blocks::cm31::{
     cm31_mul_m31_limbs, cm31_to_limbs_gadget, reformat_cm31_from_dsl_element,
 };
-use crate::algorithms::qm31::{QM31Mult, QM31MultGadget};
-use crate::algorithms::utils::{check_limb_format, convert_qm31_from_limbs, convert_qm31_to_limbs, OP_HINT};
 use anyhow::{Error, Result};
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
@@ -701,12 +703,14 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 
 #[cfg(test)]
 mod test {
+    use crate::algorithms::utils::{
+        convert_cm31_to_limbs, convert_m31_to_limbs, convert_qm31_to_limbs,
+    };
     use crate::dsl::building_blocks::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::building_blocks::qm31::{
         qm31_mul_cm31_limbs, qm31_mul_m31_limbs, reformat_qm31_to_dsl_element,
     };
     use crate::dsl::{load_data_types, load_functions};
-    use crate::algorithms::utils::{convert_cm31_to_limbs, convert_m31_to_limbs, convert_qm31_to_limbs};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};

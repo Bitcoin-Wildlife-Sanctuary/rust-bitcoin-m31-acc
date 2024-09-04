@@ -208,8 +208,8 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::{load_data_types, load_functions};
     use crate::algorithms::utils::convert_m31_to_limbs;
+    use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
     use bitcoin_script_dsl::dsl::{Element, DSL};

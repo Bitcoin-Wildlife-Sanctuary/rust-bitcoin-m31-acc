@@ -174,9 +174,9 @@ impl CM31LimbsGadget {
 #[cfg(test)]
 mod test {
     use crate::algorithms::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget};
-    use crate::report_bitcoin_script_size;
     use crate::algorithms::table::get_table;
     use crate::algorithms::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
+    use crate::report_bitcoin_script_size;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};
