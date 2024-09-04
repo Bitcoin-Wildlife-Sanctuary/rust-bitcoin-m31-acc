@@ -1,5 +1,5 @@
-use crate::dsl::cm31::cm31_mul_m31_limbs;
-use crate::dsl::qm31::qm31_mul_cm31_limbs;
+use crate::dsl::building_blocks::cm31::cm31_mul_m31_limbs;
+use crate::dsl::building_blocks::qm31::qm31_mul_cm31_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::DSL;
 
@@ -140,14 +140,14 @@ pub fn apply_twin(
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::cm31::reformat_cm31_to_dsl_element;
+    use crate::dsl::building_blocks::cm31::reformat_cm31_to_dsl_element;
+    use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::example::quotients::{
         aggregation, apply_twin, denominator_inverse_limbs_from_prepared,
         DenominatorInversesIndices, NominatorsIndices,
     };
-    use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
-    use crate::utils::convert_cm31_to_limbs;
+    use crate::algorithms::utils::convert_cm31_to_limbs;
     use bitcoin_circle_stark::constraints::{
         fast_twin_pair_vanishing_from_prepared, ColumnLineCoeffs, PreparedPairVanishing,
     };

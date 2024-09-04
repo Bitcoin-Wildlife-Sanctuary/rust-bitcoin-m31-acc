@@ -1,4 +1,6 @@
-use crate::dsl::qm31::{reformat_qm31_from_dsl_element, reformat_qm31_to_dsl_element};
+use crate::dsl::building_blocks::qm31::{
+    reformat_qm31_from_dsl_element, reformat_qm31_to_dsl_element,
+};
 use crate::dsl::utils::draw_hints_to_memory_entries;
 use anyhow::Result;
 use bitcoin_circle_stark::channel::{ChannelWithHint, Sha256ChannelGadget};
@@ -164,7 +166,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::channel::ChannelWithHint;
     use bitcoin_circle_stark::treepp::*;

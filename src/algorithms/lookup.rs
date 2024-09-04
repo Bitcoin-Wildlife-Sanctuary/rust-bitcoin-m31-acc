@@ -53,9 +53,9 @@ impl Lookup8BitGadget {
 
 #[cfg(test)]
 mod test {
-    use crate::lookup::Lookup8BitGadget;
+    use crate::algorithms::lookup::Lookup8BitGadget;
     use crate::report_bitcoin_script_size;
-    use crate::table::get_table;
+    use crate::algorithms::table::get_table;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
     use bitcoin_scriptexec::execute_script;

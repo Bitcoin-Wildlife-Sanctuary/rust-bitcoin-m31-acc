@@ -1,4 +1,4 @@
-use crate::dsl::qm31::qm31_mul_m31_limbs;
+use crate::dsl::building_blocks::qm31::qm31_mul_m31_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::DSL;
 
@@ -21,10 +21,10 @@ pub fn ibutterfly(
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::example::fold::ibutterfly;
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
-    use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};

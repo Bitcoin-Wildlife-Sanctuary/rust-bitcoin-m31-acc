@@ -121,10 +121,10 @@ pub fn power_alpha_six(dsl: &mut DSL, table: usize, alpha: usize) -> Result<Vec<
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::example::prepare::{
         column_line_coeffs, power_alpha_six, prepare_pair_vanishing,
     };
-    use crate::dsl::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;

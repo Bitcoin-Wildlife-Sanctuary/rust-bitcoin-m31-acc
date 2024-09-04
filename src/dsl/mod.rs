@@ -1,26 +1,11 @@
-pub mod table;
-
-pub mod m31;
-
-pub mod cm31;
-
-pub mod qm31;
-
-pub mod sha256;
-
-pub mod point;
-
-pub mod pow;
-
-pub mod merkle_tree;
-
+pub mod building_blocks;
 pub mod example;
-
 pub mod utils;
 
-use crate::dsl::table::{push_table, push_table_gadget};
 use bitcoin_script_dsl::dsl::{ElementType, DSL};
 use bitcoin_script_dsl::functions::FunctionMetadata;
+use building_blocks::table::{push_table, push_table_gadget};
+use building_blocks::{cm31, m31, merkle_tree, pow, qm31, sha256};
 
 pub fn load_data_types(dsl: &mut DSL) {
     dsl.add_data_type("table", ElementType::ManyNum((1 << 9) + 1));

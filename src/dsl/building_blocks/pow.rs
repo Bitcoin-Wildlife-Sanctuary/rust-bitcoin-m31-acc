@@ -1,4 +1,4 @@
-use crate::utils::OP_HINT;
+use crate::algorithms::utils::OP_HINT;
 use anyhow::Result;
 use bitcoin_circle_stark::pow::{PoWHint, PowGadget};
 use bitcoin_circle_stark::treepp::*;

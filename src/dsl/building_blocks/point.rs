@@ -1,7 +1,7 @@
-use crate::dsl::qm31::{
+use crate::dsl::building_blocks::qm31::{
     qm31_mul_m31_limbs, reformat_qm31_from_dsl_element, reformat_qm31_to_dsl_element,
 };
-use crate::utils::convert_m31_to_limbs;
+use crate::algorithms::utils::convert_m31_to_limbs;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
@@ -154,10 +154,10 @@ pub fn point_double_x(dsl: &mut DSL, table: usize, x: usize) -> Result<usize> {
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::point::{
+    use crate::dsl::building_blocks::point::{
         add_constant_m31_point, get_random_point, point_add_x_only, point_double_x,
     };
-    use crate::dsl::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::dsl::{Element, DSL};

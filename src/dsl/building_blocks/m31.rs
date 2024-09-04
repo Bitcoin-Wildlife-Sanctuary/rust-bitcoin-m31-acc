@@ -1,5 +1,5 @@
-use crate::m31::{M31Mult, M31MultGadget};
-use crate::utils::{
+use crate::algorithms::m31::{M31Mult, M31MultGadget};
+use crate::algorithms::utils::{
     check_limb_format, convert_m31_from_limbs, convert_m31_to_limbs, OP_256MUL, OP_HINT,
 };
 use anyhow::{Error, Result};
@@ -209,7 +209,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
 #[cfg(test)]
 mod test {
     use crate::dsl::{load_data_types, load_functions};
-    use crate::utils::convert_m31_to_limbs;
+    use crate::algorithms::utils::convert_m31_to_limbs;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
     use bitcoin_script_dsl::dsl::{Element, DSL};

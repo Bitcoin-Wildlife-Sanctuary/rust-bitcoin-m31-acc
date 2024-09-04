@@ -1,4 +1,4 @@
-use crate::utils::OP_256MUL;
+use crate::algorithms::utils::OP_256MUL;
 use bitcoin_circle_stark::treepp::*;
 use rust_bitcoin_m31::{cm31_fromaltstack, cm31_swap, cm31_toaltstack};
 use stwo_prover::core::fields::cm31::CM31;
@@ -104,8 +104,8 @@ impl DecomposeGadget {
 
 #[cfg(test)]
 mod test {
-    use crate::decompose::DecomposeGadget;
-    use crate::utils::convert_m31_to_limbs;
+    use crate::algorithms::decompose::DecomposeGadget;
+    use crate::algorithms::utils::convert_m31_to_limbs;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use rand::{Rng, SeedableRng};

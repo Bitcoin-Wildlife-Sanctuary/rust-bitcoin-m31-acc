@@ -1,5 +1,5 @@
-use crate::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget, CM31MultHint};
-use crate::utils::convert_cm31_to_limbs;
+use crate::algorithms::cm31::{CM31Limbs, CM31LimbsGadget, CM31Mult, CM31MultGadget, CM31MultHint};
+use crate::algorithms::utils::convert_cm31_to_limbs;
 use anyhow::Result;
 use bitcoin_circle_stark::treepp::pushable::{Builder, Pushable};
 use bitcoin_circle_stark::treepp::*;
@@ -181,10 +181,10 @@ impl Pushable for QM31MultHint {
 
 #[cfg(test)]
 mod test {
-    use crate::qm31::{QM31Mult, QM31MultGadget};
+    use crate::algorithms::qm31::{QM31Mult, QM31MultGadget};
     use crate::report_bitcoin_script_size;
-    use crate::table::get_table;
-    use crate::utils::convert_m31_to_limbs;
+    use crate::algorithms::table::get_table;
+    use crate::algorithms::utils::convert_m31_to_limbs;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_scriptexec::execute_script;
     use itertools::Itertools;
