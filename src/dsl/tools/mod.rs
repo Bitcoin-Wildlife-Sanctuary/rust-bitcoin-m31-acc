@@ -221,8 +221,13 @@ fn convert_num_to_bytes(v: i32) -> Vec<u8> {
     buffer[0..len].to_vec()
 }
 
-pub fn zip_elements(dsl: &mut DSL, list: &[usize]) -> Result<(usize, Vec<MemoryEntry>)> {
-    let mut zipper = dsl.execute_with_options(
+pub struct Zipper {
+    pub memory_entries: Vec<MemoryEntry>,
+    pub hash: Sha256Hash,
+}
+
+pub fn zip_elements(dsl: &mut DSL, list: &[usize]) -> Result<(usize, Zipper)> {
+    let mut hash = dsl.execute_with_options(
         "new_zip",
         &[],
         &Options::new().with_u32("len", list.len() as u32),
@@ -240,38 +245,43 @@ pub fn zip_elements(dsl: &mut DSL, list: &[usize]) -> Result<(usize, Vec<MemoryE
 
         match &entry.data {
             Element::Num(_) => {
-                zipper = dsl.execute("zip_num", &[zipper, idx])?[0];
+                hash = dsl.execute("zip_num", &[hash, idx])?[0];
             }
             Element::ManyNum(v) => {
-                zipper = dsl.execute_with_options(
+                hash = dsl.execute_with_options(
                     "zip_many_num",
-                    &[zipper, idx],
+                    &[hash, idx],
                     &Options::new().with_u32("len", v.len() as u32),
                 )?[0];
             }
             Element::Str(_) => {
-                zipper = dsl.execute("zip_str", &[zipper, idx])?[0];
+                hash = dsl.execute("zip_str", &[hash, idx])?[0];
             }
             Element::ManyStr(v) => {
-                zipper = dsl.execute_with_options(
+                hash = dsl.execute_with_options(
                     "zip_many_str",
-                    &[zipper, idx],
+                    &[hash, idx],
                     &Options::new().with_u32("len", v.len() as u32),
                 )?[0];
             }
         }
     }
 
-    Ok((zipper, zipped_entries))
+    let zipper = Zipper {
+        memory_entries: zipped_entries,
+        hash: Sha256Hash::from(dsl.get_str(hash).unwrap()),
+    };
+
+    Ok((hash, zipper))
 }
 
 pub fn unzip_elements(
     dsl: &mut DSL,
     expected_zipper: usize,
-    memory_entries: &[MemoryEntry],
+    zipper: &Zipper,
 ) -> Result<Vec<usize>> {
     let mut result = vec![];
-    for memory_entry in memory_entries.iter() {
+    for memory_entry in zipper.memory_entries.iter() {
         result.push(dsl.alloc_hint(memory_entry.data_type.clone(), memory_entry.data.clone())?);
     }
     let (zipper, _) = zip_elements(dsl, &result)?;
@@ -345,7 +355,7 @@ mod test {
             .alloc_input("qm31_limbs", Element::ManyNum(test_qm31_limbs.to_vec()))
             .unwrap();
 
-        let (hash_var, zipped_entries) = zip_elements(
+        let (hash_var, zipper) = zip_elements(
             &mut dsl,
             &[
                 test_m31_var,
@@ -373,7 +383,7 @@ mod test {
         load_functions(&mut dsl).unwrap();
 
         let expected_hash = dsl.alloc_input("hash", Element::Str(hash.clone())).unwrap();
-        let res = unzip_elements(&mut dsl, expected_hash, &zipped_entries).unwrap();
+        let res = unzip_elements(&mut dsl, expected_hash, &zipper).unwrap();
 
         dsl.set_program_output("m31", res[0]).unwrap();
         dsl.set_program_output("qm31", res[1]).unwrap();

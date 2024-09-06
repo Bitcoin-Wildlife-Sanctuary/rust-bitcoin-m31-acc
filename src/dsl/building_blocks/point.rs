@@ -11,7 +11,14 @@ use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::fields::qm31::QM31;
 use stwo_prover::core::fields::{Field, FieldExpOps};
 
-pub fn get_random_point(
+pub fn get_random_point_skipped(dsl: &mut DSL, channel_digest: usize) -> Result<usize> {
+    let res_draw_felt = dsl.execute("draw_felt", &[channel_digest])?;
+    let new_channel_digest = res_draw_felt[0];
+
+    Ok(new_channel_digest)
+}
+
+pub fn get_random_point_full(
     dsl: &mut DSL,
     table: usize,
     channel_digest: usize,
@@ -155,7 +162,7 @@ pub fn point_double_x(dsl: &mut DSL, table: usize, x: usize) -> Result<usize> {
 #[cfg(test)]
 mod test {
     use crate::dsl::building_blocks::point::{
-        add_constant_m31_point, get_random_point, point_add_x_only, point_double_x,
+        add_constant_m31_point, get_random_point_full, point_add_x_only, point_double_x,
     };
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::{load_data_types, load_functions};
@@ -193,7 +200,7 @@ mod test {
 
         let table = dsl.execute("push_table", &[]).unwrap()[0];
 
-        let res = get_random_point(&mut dsl, table, old_channel_digest_var).unwrap();
+        let res = get_random_point_full(&mut dsl, table, old_channel_digest_var).unwrap();
         dsl.set_program_output("hash", res.0).unwrap();
         dsl.set_program_output("qm31", res.1).unwrap();
         dsl.set_program_output("qm31", res.2).unwrap();

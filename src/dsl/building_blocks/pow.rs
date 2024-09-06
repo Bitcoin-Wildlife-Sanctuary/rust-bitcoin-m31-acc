@@ -1,5 +1,5 @@
 use crate::algorithms::utils::OP_HINT;
-use anyhow::Result;
+use anyhow::{Error, Result};
 use bitcoin_circle_stark::pow::{PoWHint, PowGadget};
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
@@ -19,6 +19,9 @@ fn verify_pow(dsl: &mut DSL, inputs: &[usize], options: &Options) -> Result<Func
     let mut channel = Sha256Channel::default();
     channel.update_digest(Sha256Hash::from(old_channel_digest));
     channel.mix_nonce(nonce);
+    if channel.trailing_zeros() < n_bits {
+        return Err(Error::msg("The proof of work requirement is not satisfied"));
+    }
 
     let new_hints = vec![
         MemoryEntry::new(

@@ -88,7 +88,7 @@ fn draw_8_numbers(dsl: &mut DSL, inputs: &[usize], options: &Options) -> Result<
     let old_channel_digest = dsl.get_str(inputs[0])?.to_vec();
 
     let mut channel = Sha256Channel::default();
-    channel.update_digest(Sha256Hash::from(old_channel_digest));
+    channel.update_digest(Sha256Hash::from(old_channel_digest.clone()));
 
     let (queries, hints) = channel.draw_queries_and_hints(8, logn);
     assert_eq!(hints.0.len(), 8);

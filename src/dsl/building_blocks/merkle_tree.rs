@@ -48,6 +48,12 @@ fn query_and_verify_merkle_twin_tree<const N: usize>(
                 .collect_vec(),
         },
     };
+
+    let mut pos = pos;
+    if pos % 2 == 1 {
+        pos -= 1;
+    }
+
     let proof_is_valid = proof.verify(&Sha256Hash::from(root_hash), path.len() + 1, pos as usize);
     if !proof_is_valid {
         return Err(Error::msg("Merkle tree proof is invalid"));
@@ -297,6 +303,18 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
             output: vec![
                 "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31",
                 "m31", "m31", "m31", "m31",
+            ],
+        },
+    )?;
+    dsl.add_function(
+        "precomputed_merkle_tree_15",
+        FunctionWithOptionsMetadata {
+            trace_generator: query_and_verify_precomputed_merkle_tree::<15>,
+            script_generator: query_and_verify_precomputed_merkle_tree_gadget::<15>,
+            input: vec!["position"],
+            output: vec![
+                "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31",
+                "m31", "m31", "m31", "m31", "m31",
             ],
         },
     )?;
