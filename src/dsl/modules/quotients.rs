@@ -143,7 +143,7 @@ mod test {
     use crate::algorithms::utils::convert_cm31_to_limbs;
     use crate::dsl::building_blocks::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
-    use crate::dsl::example::quotients::{
+    use crate::dsl::modules::quotients::{
         aggregation, apply_twin, denominator_inverse_limbs_from_prepared,
         DenominatorInversesIndices, NominatorsIndices,
     };
@@ -197,8 +197,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let u1_var = dsl
             .alloc_input("cm31", Element::ManyNum(reformat_cm31_to_dsl_element(u1)))
@@ -337,8 +337,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let x_imag_div_y_imag_var = dsl
             .alloc_input(
@@ -413,8 +413,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let z_y_var = dsl
             .alloc_input("m31", Element::Num(query_point.y.0 as i32))

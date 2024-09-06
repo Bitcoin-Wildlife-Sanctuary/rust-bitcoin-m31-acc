@@ -56,7 +56,7 @@ fn verify_pow_gadget(_: &[usize], options: &Options) -> Result<Script> {
     })
 }
 
-pub(crate) fn load_functions(dsl: &mut DSL) {
+pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
     dsl.add_function(
         "verify_pow",
         FunctionWithOptionsMetadata {
@@ -65,7 +65,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash"],
             output: vec!["hash"],
         },
-    );
+    )
 }
 
 #[cfg(test)]
@@ -112,8 +112,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let old_channel_digest = dsl.alloc_input("hash", Element::Str(init_state)).unwrap();
 

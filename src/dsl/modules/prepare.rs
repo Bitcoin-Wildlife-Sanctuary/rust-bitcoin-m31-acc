@@ -122,7 +122,7 @@ pub fn power_alpha_six(dsl: &mut DSL, table: usize, alpha: usize) -> Result<Vec<
 #[cfg(test)]
 mod test {
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
-    use crate::dsl::example::prepare::{
+    use crate::dsl::modules::prepare::{
         column_line_coeffs, power_alpha_six, prepare_pair_vanishing,
     };
     use crate::dsl::{load_data_types, load_functions};
@@ -164,8 +164,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let y_val = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(y)))
@@ -216,8 +216,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let x_val = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(x)))
@@ -262,8 +262,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let alpha_val = dsl
             .alloc_input(

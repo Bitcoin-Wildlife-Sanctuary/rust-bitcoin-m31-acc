@@ -22,9 +22,9 @@ pub fn ibutterfly(
 #[cfg(test)]
 mod test {
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
-    use crate::dsl::example::fold::ibutterfly;
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
+    use crate::dsl::modules::fold::ibutterfly;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
@@ -52,8 +52,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let v0_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(v0)))

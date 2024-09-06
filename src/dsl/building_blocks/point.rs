@@ -184,8 +184,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let old_channel_digest_var = dsl
             .alloc_input("hash", Element::Str(init_state.as_ref().to_vec()))
@@ -220,8 +220,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let current_point_x = dsl
             .alloc_input(
@@ -280,8 +280,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let point_a_x = dsl
             .alloc_input(
@@ -338,8 +338,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let point_x = dsl
             .alloc_input(

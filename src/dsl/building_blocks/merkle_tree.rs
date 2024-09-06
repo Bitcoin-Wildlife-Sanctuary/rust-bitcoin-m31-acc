@@ -260,7 +260,7 @@ fn query_and_verify_precomputed_merkle_tree_gadget<const N: usize>(
     })
 }
 
-pub(crate) fn load_functions(dsl: &mut DSL) {
+pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
     dsl.add_function(
         "merkle_twin_tree_1",
         FunctionWithOptionsMetadata {
@@ -269,7 +269,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "position"],
             output: vec!["m31", "m31"],
         },
-    );
+    )?;
     dsl.add_function(
         "merkle_twin_tree_4",
         FunctionWithOptionsMetadata {
@@ -278,7 +278,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "position"],
             output: vec!["m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31"],
         },
-    );
+    )?;
     dsl.add_function(
         "raw_merkle_tree",
         FunctionWithOptionsMetadata {
@@ -287,7 +287,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "hash", "position"],
             output: vec![],
         },
-    );
+    )?;
     dsl.add_function(
         "precomputed_merkle_tree_14",
         FunctionWithOptionsMetadata {
@@ -299,7 +299,9 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
                 "m31", "m31", "m31", "m31",
             ],
         },
-    )
+    )?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -344,8 +346,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let root_hash_var = dsl
             .alloc_input(
@@ -423,8 +425,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let root_hash_var = dsl
             .alloc_input(
@@ -498,8 +500,8 @@ mod test {
         ));
 
         let mut dsl = DSL::new();
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let root_hash_var = dsl
             .alloc_input(
@@ -533,8 +535,8 @@ mod test {
         test_program(dsl, script! {}).unwrap();
 
         let mut dsl = DSL::new();
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let root_hash_var = dsl
             .alloc_input(
@@ -589,8 +591,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let pos_var = dsl
             .alloc_input("position", Element::Num(pos as i32))

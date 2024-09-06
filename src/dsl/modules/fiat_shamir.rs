@@ -177,13 +177,13 @@ pub fn coset_vanishing(
 mod test {
     use crate::algorithms::utils::convert_qm31_to_limbs;
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
-    use crate::dsl::example::fiat_shamir::{
+    use crate::dsl::load_data_types;
+    use crate::dsl::load_functions;
+    use crate::dsl::modules::fiat_shamir::{
         boundary_constraint_evaluation, coset_vanishing, eval_from_partial_evals,
         pair_vanishing_with_constant_m31_points, step_constraint_denominator_inverse_evaluation,
         step_constraint_nominator_evaluation,
     };
-    use crate::dsl::load_data_types;
-    use crate::dsl::load_functions;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
     use bitcoin_script_dsl::dsl::{Element, DSL};
@@ -215,8 +215,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(a)))
@@ -262,8 +262,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let z_x_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.x)))
@@ -307,8 +307,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let z_x_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(z.x)))
@@ -375,8 +375,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let f_z_var = dsl
             .alloc_input(
@@ -433,8 +433,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let z_x_var = dsl
             .alloc_input(
@@ -472,8 +472,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let f_z_var = dsl
             .alloc_input(

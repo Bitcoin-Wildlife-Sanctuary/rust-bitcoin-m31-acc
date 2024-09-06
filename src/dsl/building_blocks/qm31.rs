@@ -518,7 +518,7 @@ pub(crate) fn reformat_qm31_from_dsl_element(v: &[i32]) -> QM31 {
     QM31::from_u32_unchecked(v[3] as u32, v[2] as u32, v[1] as u32, v[0] as u32)
 }
 
-pub(crate) fn load_functions(dsl: &mut DSL) {
+pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
     dsl.add_function(
         "qm31_to_limbs",
         FunctionMetadata {
@@ -527,7 +527,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_limbs_equalverify",
         FunctionMetadata {
@@ -536,7 +536,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31_limbs", "qm31_limbs"],
             output: vec![],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_limbs_mul",
         FunctionMetadata {
@@ -545,7 +545,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&table", "qm31_limbs", "qm31_limbs"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_limbs_first",
         FunctionMetadata {
@@ -554,7 +554,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&qm31_limbs"],
             output: vec!["cm31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_limbs_second",
         FunctionMetadata {
@@ -563,7 +563,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&qm31_limbs"],
             output: vec!["cm31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_equalverify",
         FunctionMetadata {
@@ -572,7 +572,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31", "qm31"],
             output: vec![],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_first",
         FunctionMetadata {
@@ -581,7 +581,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&qm31"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_second",
         FunctionMetadata {
@@ -590,7 +590,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&qm31"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_1add",
         FunctionMetadata {
@@ -599,7 +599,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_1sub",
         FunctionMetadata {
@@ -608,7 +608,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_neg",
         FunctionMetadata {
@@ -617,7 +617,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_add",
         FunctionMetadata {
@@ -626,7 +626,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31", "qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_sub",
         FunctionMetadata {
@@ -635,7 +635,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31", "qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_from_first_and_second",
         FunctionMetadata {
@@ -644,7 +644,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "cm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_add_cm31",
         FunctionMetadata {
@@ -653,7 +653,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31", "cm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_add_m31",
         FunctionMetadata {
@@ -662,7 +662,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31", "m31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_shift_by_i",
         FunctionMetadata {
@@ -671,7 +671,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_shift_by_j",
         FunctionMetadata {
@@ -680,7 +680,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_shift_by_ij",
         FunctionMetadata {
@@ -689,7 +689,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["qm31"],
             output: vec!["qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "qm31_limbs_inverse",
         FunctionMetadata {
@@ -698,7 +698,9 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&table", "qm31_limbs"],
             output: vec!["qm31_limbs"],
         },
-    )
+    )?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -737,8 +739,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_constant(
@@ -786,8 +788,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("qm31_limbs", Element::ManyNum(a_limbs.to_vec()))
@@ -840,8 +842,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("qm31_limbs", Element::ManyNum(a_limbs.to_vec()))
@@ -881,8 +883,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input(
@@ -931,8 +933,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(a)))
@@ -988,8 +990,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(a)))
@@ -1034,8 +1036,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let qm31_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
@@ -1077,8 +1079,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let qm31_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
@@ -1120,8 +1122,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let qm31_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
@@ -1162,8 +1164,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let qm31_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
@@ -1199,8 +1201,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let qm31_var = dsl
             .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(qm31)))
@@ -1250,8 +1252,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("qm31_limbs", Element::ManyNum(a_limbs.to_vec()))

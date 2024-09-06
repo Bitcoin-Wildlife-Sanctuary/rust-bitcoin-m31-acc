@@ -122,7 +122,7 @@ fn draw_8_numbers_gadget(_: &[usize], options: &Options) -> Result<Script> {
     })
 }
 
-pub(crate) fn load_functions(dsl: &mut DSL) {
+pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
     dsl.add_function(
         "mix_digest",
         FunctionMetadata {
@@ -131,7 +131,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "hash"],
             output: vec!["hash"],
         },
-    );
+    )?;
     dsl.add_function(
         "draw_felt",
         FunctionMetadata {
@@ -140,7 +140,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash"],
             output: vec!["hash", "qm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "mix_felt",
         FunctionMetadata {
@@ -149,7 +149,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["hash", "qm31"],
             output: vec!["hash"],
         },
-    );
+    )?;
     dsl.add_function(
         "draw_8_numbers",
         FunctionWithOptionsMetadata {
@@ -161,7 +161,8 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
                 "position", "position",
             ],
         },
-    );
+    )?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -195,8 +196,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let old_channel_digest = dsl
             .alloc_input("hash", Element::Str(init_state.as_ref().to_vec()))
@@ -236,8 +237,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let old_channel_digest = dsl
             .alloc_input("hash", Element::Str(init_state.as_ref().to_vec()))
@@ -277,8 +278,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let old_channel_digest = dsl
             .alloc_input("hash", Element::Str(init_state.as_ref().to_vec()))
@@ -319,8 +320,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let old_channel_digest = dsl
             .alloc_input("hash", Element::Str(init_state.as_ref().to_vec()))

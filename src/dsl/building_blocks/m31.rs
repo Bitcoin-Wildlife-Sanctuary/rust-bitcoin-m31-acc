@@ -158,7 +158,7 @@ pub fn m31_equalverify_gadget(_: &[usize]) -> Result<Script> {
     })
 }
 
-pub(crate) fn load_functions(dsl: &mut DSL) {
+pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
     dsl.add_function(
         "m31_to_limbs",
         FunctionMetadata {
@@ -167,7 +167,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["m31"],
             output: vec!["m31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "m31_limbs_equalverify",
         FunctionMetadata {
@@ -176,7 +176,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["m31_limbs", "m31_limbs"],
             output: vec![],
         },
-    );
+    )?;
     dsl.add_function(
         "m31_limbs_mul",
         FunctionMetadata {
@@ -185,7 +185,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&table", "m31_limbs", "m31_limbs"],
             output: vec!["m31"],
         },
-    );
+    )?;
     dsl.add_function(
         "m31_limbs_inverse",
         FunctionMetadata {
@@ -194,7 +194,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&table", "m31_limbs"],
             output: vec!["m31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "m31_equalverify",
         FunctionMetadata {
@@ -203,7 +203,9 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["m31", "m31"],
             output: vec![],
         },
-    )
+    )?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -227,8 +229,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl.alloc_constant("m31", Element::Num(a_val)).unwrap();
         let res = dsl.execute("m31_to_limbs", &[a]).unwrap();
@@ -263,8 +265,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("m31_limbs", Element::ManyNum(a_limbs.to_vec()))
@@ -299,8 +301,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("m31_limbs", Element::ManyNum(a_limbs.to_vec()))

@@ -359,7 +359,7 @@ pub(crate) fn reformat_cm31_from_dsl_element(v: &[i32]) -> CM31 {
     CM31::from_u32_unchecked(v[1] as u32, v[0] as u32)
 }
 
-pub(crate) fn load_functions(dsl: &mut DSL) {
+pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
     dsl.add_function(
         "cm31_to_limbs",
         FunctionMetadata {
@@ -368,7 +368,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31"],
             output: vec!["cm31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_limbs_equalverify",
         FunctionMetadata {
@@ -377,7 +377,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31_limbs", "cm31_limbs"],
             output: vec![],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_limbs_mul",
         FunctionMetadata {
@@ -386,7 +386,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&table", "cm31_limbs", "cm31_limbs"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_limbs_inverse",
         FunctionMetadata {
@@ -395,7 +395,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&table", "cm31_limbs"],
             output: vec!["cm31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_recompose",
         FunctionMetadata {
@@ -404,7 +404,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31_limbs"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_equalverify",
         FunctionMetadata {
@@ -413,7 +413,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "cm31"],
             output: vec![],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_add",
         FunctionMetadata {
@@ -422,7 +422,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "cm31"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_add_m31",
         FunctionMetadata {
@@ -431,7 +431,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "m31"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_sub",
         FunctionMetadata {
@@ -440,7 +440,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["cm31", "cm31"],
             output: vec!["cm31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_limbs_real",
         FunctionMetadata {
@@ -449,7 +449,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&cm31_limbs"],
             output: vec!["m31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_limbs_imag",
         FunctionMetadata {
@@ -458,7 +458,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&cm31_limbs"],
             output: vec!["m31_limbs"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_real",
         FunctionMetadata {
@@ -467,7 +467,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&cm31"],
             output: vec!["m31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_imag",
         FunctionMetadata {
@@ -476,7 +476,7 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["&cm31"],
             output: vec!["m31"],
         },
-    );
+    )?;
     dsl.add_function(
         "cm31_from_real_and_imag",
         FunctionMetadata {
@@ -485,7 +485,9 @@ pub(crate) fn load_functions(dsl: &mut DSL) {
             input: vec!["m31", "m31"],
             output: vec!["cm31"],
         },
-    )
+    )?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -513,8 +515,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_constant("cm31", Element::ManyNum(vec![a_imag as i32, a_real as i32]))
@@ -557,8 +559,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("cm31_limbs", Element::ManyNum(a_limbs.to_vec()))
@@ -601,8 +603,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("cm31_limbs", Element::ManyNum(a_limbs.to_vec()))
@@ -643,8 +645,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input(
@@ -692,8 +694,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input(
@@ -735,8 +737,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let a = dsl
             .alloc_input("m31", Element::Num(a_real_m31.0 as i32))
@@ -778,8 +780,8 @@ mod test {
 
         let mut dsl = DSL::new();
 
-        load_data_types(&mut dsl);
-        load_functions(&mut dsl);
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
 
         let cm31_var = dsl
             .alloc_input("cm31", Element::ManyNum(reformat_cm31_to_dsl_element(cm31)))
