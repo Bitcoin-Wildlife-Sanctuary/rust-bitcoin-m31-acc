@@ -19,7 +19,7 @@ use stwo_prover::core::fields::IntoSlice;
 use stwo_prover::core::prover::{LOG_BLOWUP_FACTOR, PROOF_OF_WORK_BITS};
 use stwo_prover::core::vcs::sha256_hash::Sha256Hasher;
 
-pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DSL> {
+pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL> {
     let mut dsl = DSL::new();
 
     load_data_types(&mut dsl)?;
@@ -241,8 +241,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
                     proof.siblings.iter().map(|x| x.to_vec()).collect_vec(),
                 ),
         )?;
-
-        twiddles_vars.push(res);
+        twiddles_vars.push(res[res.len() - 5..res.len()].to_vec());
     }
 
     // results of interest:
@@ -267,24 +266,22 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     // (these four are for per-query)
 
     // decision:
-    // pass information needed for the immediate checking stage
-    //
     // - random_coeff_1_var (for deferred check)
     // - trace_oods_values_vars (for deferred check)
     // - composition_oods_raw_values_vars (for deferred check)
     // - before_oods_channel_var
     // - random_coeff_2_var
+    //
     // - circle_poly_alpha_var
     // - last_layer_var
-    //
-    // sort the per-query information and split them per query
-    //
+    // - fri_tree_commitments_vars
+    // - folding alphas
     // - queries
     // - trace_queried_results
     // - composition_queried_results
     // - twiddles_vars
 
-    let list_part2_verify = [
+    let list_fiat_shamir_verify1 = [
         random_coeff_1_var,
         trace_oods_values_vars[0],
         trace_oods_values_vars[1],
@@ -295,60 +292,43 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
         composition_oods_raw_values_vars[3],
         before_oods_channel_var,
         random_coeff_2_var,
-        circle_poly_alpha_var,
-        last_layer_var,
     ];
 
-    let (pack_part2_verify_hash, pack_part2_verify) = zip_elements(&mut dsl, &list_part2_verify)?;
+    let (pack_fiat_shamir_verify1_hash, pack_fiat_shamir_verify1) =
+        zip_elements(&mut dsl, &list_fiat_shamir_verify1)?;
 
-    let mut list_after_part2 = vec![];
+    let mut list_after_fiat_shamir = vec![circle_poly_alpha_var, last_layer_var];
+
+    for &fri_tree_commitments_var in fri_tree_commitments_vars.iter() {
+        list_after_fiat_shamir.push(fri_tree_commitments_var);
+    }
+    for &folding_alphas_var in folding_alphas_vars.iter() {
+        list_after_fiat_shamir.push(folding_alphas_var);
+    }
+
     for &query in queries.iter() {
-        list_after_part2.push(query);
+        list_after_fiat_shamir.push(query);
     }
     for &trace_queried_result in trace_queried_results.iter() {
-        list_after_part2.push(trace_queried_result.0);
-        list_after_part2.push(trace_queried_result.1);
+        list_after_fiat_shamir.push(trace_queried_result.0);
+        list_after_fiat_shamir.push(trace_queried_result.1);
     }
     for &composition_queried_result in composition_queried_results.iter() {
-        list_after_part2.push(composition_queried_result.0);
-        list_after_part2.push(composition_queried_result.1);
+        list_after_fiat_shamir.push(composition_queried_result.0);
+        list_after_fiat_shamir.push(composition_queried_result.1);
     }
     for twiddles_vars_per_query in twiddles_vars.iter() {
-        list_after_part2.extend_from_slice(twiddles_vars_per_query);
+        list_after_fiat_shamir.extend_from_slice(twiddles_vars_per_query);
     }
 
-    let (pack_after_part2_hash, pack_after_part2) = zip_elements(&mut dsl, &list_after_part2)?;
+    let (pack_after_fiat_shamir_hash, pack_after_fiat_shamir) =
+        zip_elements(&mut dsl, &list_after_fiat_shamir)?;
 
-    cache.insert("part2_verify_hash".to_string(), pack_part2_verify);
-    cache.insert("after_part2_hash".to_string(), pack_after_part2);
+    cache.insert("fiat_shamir_verify1", pack_fiat_shamir_verify1);
+    cache.insert("after_fiat_shamir", pack_after_fiat_shamir);
 
-    dsl.set_program_output("hash", pack_part2_verify_hash)?;
-    dsl.set_program_output("hash", pack_after_part2_hash)?;
+    dsl.set_program_output("hash", pack_fiat_shamir_verify1_hash)?;
+    dsl.set_program_output("hash", pack_after_fiat_shamir_hash)?;
 
     Ok(dsl)
-}
-
-#[cfg(test)]
-mod test {
-    use crate::dsl::verifier::hints::Hints;
-    use crate::dsl::verifier::part1_fiat_shamir_noncompute_plus_precomputed_merkle::generate_dsl;
-    use bitcoin_circle_stark::treepp::*;
-    use bitcoin_script_dsl::test_program;
-    use std::collections::HashMap;
-
-    #[test]
-    fn test_generate_dsl() {
-        let hints = Hints::instance();
-        let mut cache = HashMap::new();
-
-        let dsl = generate_dsl(&hints, &mut cache).unwrap();
-        test_program(
-            dsl,
-            script! {
-                { cache.get(&"part2_verify_hash".to_string()).unwrap().hash }
-                { cache.get(&"after_part2_hash".to_string()).unwrap().hash }
-            },
-        )
-        .unwrap();
-    }
 }

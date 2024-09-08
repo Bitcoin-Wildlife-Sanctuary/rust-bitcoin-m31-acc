@@ -26,7 +26,7 @@ pub fn eval_from_partial_evals(
     Ok(sum)
 }
 
-pub fn step_constraint_nominator_evaluation(
+pub fn step_constraint_numerator_evaluation(
     dsl: &mut DSL,
     table: usize,
     f_z: usize,
@@ -182,7 +182,7 @@ mod test {
     use crate::dsl::modules::fiat_shamir::{
         boundary_constraint_evaluation, coset_vanishing, eval_from_partial_evals,
         pair_vanishing_with_constant_m31_points, step_constraint_denominator_inverse_evaluation,
-        step_constraint_nominator_evaluation,
+        step_constraint_numerator_evaluation,
     };
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
@@ -411,7 +411,7 @@ mod test {
 
         let table = dsl.execute("push_table", &[]).unwrap()[0];
 
-        let res = step_constraint_nominator_evaluation(
+        let res = step_constraint_numerator_evaluation(
             &mut dsl, table, f_z_var, f_gz_var, f_g2z_var, z_x_var, z_y_var, 10,
         )
         .unwrap();

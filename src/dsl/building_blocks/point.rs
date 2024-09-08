@@ -104,6 +104,31 @@ pub fn add_constant_m31_point(
     Ok((new_x, new_y))
 }
 
+pub fn add_constant_m31_point_y_only(
+    dsl: &mut DSL,
+    table: usize,
+    current_x: usize,
+    current_y: usize,
+    constant: CirclePoint<M31>,
+) -> Result<usize> {
+    // new y: x0 · y1 + y0 · x1
+
+    let y1_limbs = dsl.alloc_constant(
+        "m31_limbs",
+        Element::ManyNum(convert_m31_to_limbs(constant.y.0).to_vec()),
+    )?;
+    let x0y1 = qm31_mul_m31_limbs(dsl, table, current_x, y1_limbs)?;
+
+    let x1_limbs = dsl.alloc_constant(
+        "m31_limbs",
+        Element::ManyNum(convert_m31_to_limbs(constant.x.0).to_vec()),
+    )?;
+    let y0x1 = qm31_mul_m31_limbs(dsl, table, current_y, x1_limbs)?;
+
+    let new_y = dsl.execute("qm31_sub", &[x0y1, y0x1])?[0];
+    Ok(new_y)
+}
+
 pub fn add_constant_m31_point_x_only(
     dsl: &mut DSL,
     table: usize,

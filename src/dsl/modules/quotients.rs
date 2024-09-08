@@ -12,7 +12,7 @@ pub struct DenominatorInversesIndices {
 }
 
 #[derive(Clone)]
-pub struct NominatorsIndices {
+pub struct NumeratorsIndices {
     pub a1: usize,
     pub a2: usize,
     pub a3: usize,
@@ -26,39 +26,39 @@ pub fn aggregation(
     dsl: &mut DSL,
     table: usize,
     denominator_inverses_indices: &DenominatorInversesIndices,
-    nominators_indices: &NominatorsIndices,
+    numerators_indices: &NumeratorsIndices,
     power_alphas: &[usize],
 ) -> Result<usize> {
     // alpha^6 * (a1 * u1) + alpha^5 * (a2 * u2) + alpha^4 * (a3 * u3) +
     // (alpha^3 * c1 + alpha^2 * c2 + alpha * c3 + c4) * u4
 
     let u1_limbs = dsl.execute("cm31_to_limbs", &[denominator_inverses_indices.u1])?[0];
-    let a1_limbs = dsl.execute("cm31_to_limbs", &[nominators_indices.a1])?[0];
+    let a1_limbs = dsl.execute("cm31_to_limbs", &[numerators_indices.a1])?[0];
     let u1a1 = dsl.execute("cm31_limbs_mul", &[table, u1_limbs, a1_limbs])?[0];
 
     let u2_limbs = dsl.execute("cm31_to_limbs", &[denominator_inverses_indices.u2])?[0];
-    let a2_limbs = dsl.execute("cm31_to_limbs", &[nominators_indices.a2])?[0];
+    let a2_limbs = dsl.execute("cm31_to_limbs", &[numerators_indices.a2])?[0];
     let u2a2 = dsl.execute("cm31_limbs_mul", &[table, u2_limbs, a2_limbs])?[0];
 
     let u3_limbs = dsl.execute("cm31_to_limbs", &[denominator_inverses_indices.u3])?[0];
-    let a3_limbs = dsl.execute("cm31_to_limbs", &[nominators_indices.a3])?[0];
+    let a3_limbs = dsl.execute("cm31_to_limbs", &[numerators_indices.a3])?[0];
     let u3a3 = dsl.execute("cm31_limbs_mul", &[table, u3_limbs, a3_limbs])?[0];
 
-    let c1_limbs = dsl.execute("cm31_to_limbs", &[nominators_indices.c1])?[0];
+    let c1_limbs = dsl.execute("cm31_to_limbs", &[numerators_indices.c1])?[0];
     let alpha3c1 = qm31_mul_cm31_limbs(dsl, table, power_alphas[3], c1_limbs)?;
     // power_alphas[3] = alpha^3
 
-    let c2_limbs = dsl.execute("cm31_to_limbs", &[nominators_indices.c2])?[0];
+    let c2_limbs = dsl.execute("cm31_to_limbs", &[numerators_indices.c2])?[0];
     let alpha2c2 = qm31_mul_cm31_limbs(dsl, table, power_alphas[4], c2_limbs)?;
     // power_alphas[4] = alpha^2
 
-    let c3_limbs = dsl.execute("cm31_to_limbs", &[nominators_indices.c3])?[0];
+    let c3_limbs = dsl.execute("cm31_to_limbs", &[numerators_indices.c3])?[0];
     let alpha1c3 = qm31_mul_cm31_limbs(dsl, table, power_alphas[5], c3_limbs)?;
     // power_alphas[5] = alpha
 
     let mut sum = dsl.execute("qm31_add", &[alpha3c1, alpha2c2])?[0];
     sum = dsl.execute("qm31_add", &[sum, alpha1c3])?[0];
-    sum = dsl.execute("qm31_add_cm31", &[sum, nominators_indices.c4])?[0];
+    sum = dsl.execute("qm31_add_cm31", &[sum, numerators_indices.c4])?[0];
 
     let u4_limbs = dsl.execute("cm31_to_limbs", &[denominator_inverses_indices.u4])?[0];
     let sumu4 = qm31_mul_cm31_limbs(dsl, table, sum, u4_limbs)?;
@@ -145,7 +145,7 @@ mod test {
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
     use crate::dsl::modules::quotients::{
         aggregation, apply_twin, denominator_inverse_limbs_from_prepared,
-        DenominatorInversesIndices, NominatorsIndices,
+        DenominatorInversesIndices, NumeratorsIndices,
     };
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::constraints::{
@@ -242,7 +242,7 @@ mod test {
             u4: u4_var,
         };
 
-        let nominators_indices = NominatorsIndices {
+        let numerators_indices = NumeratorsIndices {
             a1: a1_var,
             a2: a2_var,
             a3: a3_var,
@@ -295,7 +295,7 @@ mod test {
             &mut dsl,
             table,
             &denominator_inverses_indices,
-            &nominators_indices,
+            &numerators_indices,
             &[alpha6, alpha5, alpha4, alpha3, alpha2, alpha1],
         )
         .unwrap();

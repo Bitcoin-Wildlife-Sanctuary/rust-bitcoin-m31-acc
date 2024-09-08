@@ -4,6 +4,7 @@ pub mod tools;
 pub mod utils;
 pub mod verifier;
 
+use crate::dsl::building_blocks::bit;
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{ElementType, DSL};
 use bitcoin_script_dsl::functions::FunctionMetadata;
@@ -45,6 +46,7 @@ pub fn load_functions(dsl: &mut DSL) -> Result<()> {
     pow::load_functions(dsl)?;
     merkle_tree::load_functions(dsl)?;
     tools::load_functions(dsl)?;
+    bit::load_functions(dsl)?;
 
     Ok(())
 }
