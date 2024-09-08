@@ -1,4 +1,4 @@
-pub mod bit;
+pub mod utils;
 pub mod cm31;
 pub mod m31;
 pub mod merkle_tree;
