@@ -6,7 +6,7 @@ use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use std::collections::HashMap;
 
-pub fn generate_dsl(_: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL> {
+pub fn generate_dsl(_: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DSL> {
     let mut dsl = DSL::new();
     load_data_types(&mut dsl)?;
     load_functions(&mut dsl)?;
@@ -117,7 +117,7 @@ pub fn generate_dsl(_: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL>
     let (pack_prepared_oods1_hash, pack_prepared_oods1) =
         zip_elements(&mut dsl, &list_prepared_oods1)?;
 
-    cache.insert("prepared_oods1", pack_prepared_oods1);
+    cache.insert("prepared_oods1".to_string(), pack_prepared_oods1);
     dsl.set_program_output("hash", pack_prepared_oods1_hash)?;
     dsl.set_program_output("hash", after_fiat_shamir_hash)?;
 

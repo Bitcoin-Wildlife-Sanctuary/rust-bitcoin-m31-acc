@@ -16,7 +16,17 @@ pub mod part7_column_linear_combination_compute;
 
 pub mod part8_prepared_oods_and_alphas_compute;
 
-pub mod part9_sort_queries_noncompute;
+pub mod part9_sort_queries_first_3_noncompute;
+
+pub mod part10_sort_queries_last_5_noncompute;
+
+pub mod per_query_part1_reorganize_noncompute;
+
+pub mod per_query_part2_folding_compute;
+
+pub mod per_query_part3_folding_compute;
+
+pub mod per_query_part4_denominator_inverses_compute;
 
 #[cfg(test)]
 mod test {
@@ -120,13 +130,67 @@ mod test {
         )
         .unwrap();
 
-        let dsl = super::part9_sort_queries_noncompute::generate_dsl(&hints, &mut cache).unwrap();
+        let dsl =
+            super::part9_sort_queries_first_3_noncompute::generate_dsl(&hints, &mut cache).unwrap();
         test_program(
             dsl,
             script! {
                 { cache.get("shared_information").unwrap().hash }
+                { cache.get("query1").unwrap().hash }
+                { cache.get("query2").unwrap().hash }
+                { cache.get("query3").unwrap().hash }
+                { cache.get("unsorted").unwrap().hash }
             },
         )
         .unwrap();
+
+        let dsl =
+            super::part10_sort_queries_last_5_noncompute::generate_dsl(&hints, &mut cache).unwrap();
+        test_program(
+            dsl,
+            script! {
+                { cache.get("global_state").unwrap().hash }
+            },
+        )
+        .unwrap();
+
+        for query_idx in 1..=8 {
+            let dsl = super::per_query_part1_reorganize_noncompute::generate_dsl(
+                &hints, &mut cache, query_idx,
+            )
+            .unwrap();
+            test_program(
+                dsl,
+                script! {
+                    { cache.get("global_state").unwrap().hash }
+                    { cache.get(&format!("query{}_fri_folding1", query_idx)).unwrap().hash }
+                },
+            )
+            .unwrap();
+
+            let dsl =
+                super::per_query_part2_folding_compute::generate_dsl(&hints, &mut cache, query_idx)
+                    .unwrap();
+            test_program(
+                dsl,
+                script! {
+                    { cache.get("global_state").unwrap().hash }
+                    { cache.get(&format!("query{}_fri_folding2", query_idx)).unwrap().hash }
+                },
+            )
+            .unwrap();
+
+            let dsl =
+                super::per_query_part3_folding_compute::generate_dsl(&hints, &mut cache, query_idx)
+                    .unwrap();
+            test_program(
+                dsl,
+                script! {
+                    { cache.get("global_state").unwrap().hash }
+                    { cache.get(&format!("query{}_denominator_inverses", query_idx)).unwrap().hash }
+                },
+            )
+            .unwrap();
+        }
     }
 }

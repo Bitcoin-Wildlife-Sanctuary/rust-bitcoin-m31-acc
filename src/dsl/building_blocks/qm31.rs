@@ -15,7 +15,7 @@ use rust_bitcoin_m31::{
     cm31_add, m31_add, m31_add_n31, m31_sub, push_m31_one, push_n31_one, push_qm31_one,
     qm31_add as raw_qm31_add, qm31_equalverify as raw_qm31_equalverify, qm31_neg as raw_qm31_neg,
     qm31_shift_by_i as raw_qm31_shift_by_i, qm31_shift_by_ij as raw_qm31_shift_by_ij,
-    qm31_shift_by_j as raw_qm31_shift_by_j, qm31_sub as raw_qm31_sub,
+    qm31_shift_by_j as raw_qm31_shift_by_j, qm31_sub as raw_qm31_sub, qm31_swap,
 };
 use std::ops::{Add, Neg, Sub};
 use stwo_prover::core::fields::cm31::CM31;
@@ -505,6 +505,35 @@ fn qm31_limbs_inverse_gadget(r: &[usize]) -> Result<Script> {
     })
 }
 
+fn qm31_conditional_swap(dsl: &mut DSL, inputs: &[usize]) -> Result<FunctionOutput> {
+    let a = dsl.get_many_num(inputs[0])?.to_vec();
+    let b = dsl.get_many_num(inputs[1])?.to_vec();
+    let bit = dsl.get_num(inputs[2])?;
+
+    if bit != 0 && bit != 1 {
+        return Err(Error::msg("The swap bit is expected to be either 0 or 1"));
+    }
+
+    let (first, second) = if bit == 0 { (&a, &b) } else { (&b, &a) };
+
+    let mut new_elements = vec![];
+    new_elements.push(MemoryEntry::new("qm31", Element::ManyNum(first.to_vec())));
+    new_elements.push(MemoryEntry::new("qm31", Element::ManyNum(second.to_vec())));
+
+    Ok(FunctionOutput {
+        new_elements,
+        new_hints: vec![],
+    })
+}
+
+fn qm31_conditional_swap_gadget(_: &[usize]) -> Result<Script> {
+    Ok(script! {
+        OP_IF
+            qm31_swap
+        OP_ENDIF
+    })
+}
+
 pub(crate) fn reformat_qm31_to_dsl_element(v: QM31) -> Vec<i32> {
     vec![
         v.1 .1 .0 as i32,
@@ -697,6 +726,15 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
             script_generator: qm31_limbs_inverse_gadget,
             input: vec!["&table", "qm31_limbs"],
             output: vec!["qm31_limbs"],
+        },
+    )?;
+    dsl.add_function(
+        "qm31_conditional_swap",
+        FunctionMetadata {
+            trace_generator: qm31_conditional_swap,
+            script_generator: qm31_conditional_swap_gadget,
+            input: vec!["qm31", "qm31", "position"],
+            output: vec!["qm31", "qm31"],
         },
     )?;
 
@@ -1275,6 +1313,68 @@ mod test {
             dsl,
             script! {
                 { convert_qm31_to_limbs(inv).to_vec() }
+            },
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_qm31_conditional_swap() {
+        let mut prng = ChaCha20Rng::seed_from_u64(0);
+
+        let a = get_rand_qm31(&mut prng);
+        let b = get_rand_qm31(&mut prng);
+
+        let mut dsl = DSL::new();
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
+
+        let a_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(a)))
+            .unwrap();
+        let b_var = dsl
+            .alloc_input("qm31", Element::ManyNum(reformat_qm31_to_dsl_element(b)))
+            .unwrap();
+
+        let bit_0_var = dsl.alloc_input("position", Element::Num(0)).unwrap();
+        let bit_1_var = dsl.alloc_input("position", Element::Num(1)).unwrap();
+
+        let res1 = dsl
+            .execute("qm31_conditional_swap", &[a_var, b_var, bit_0_var])
+            .unwrap();
+        let res2 = dsl
+            .execute("qm31_conditional_swap", &[a_var, b_var, bit_1_var])
+            .unwrap();
+
+        assert_eq!(
+            dsl.get_many_num(res1[0]).unwrap(),
+            reformat_qm31_to_dsl_element(a)
+        );
+        assert_eq!(
+            dsl.get_many_num(res1[1]).unwrap(),
+            reformat_qm31_to_dsl_element(b)
+        );
+        assert_eq!(
+            dsl.get_many_num(res2[0]).unwrap(),
+            reformat_qm31_to_dsl_element(b)
+        );
+        assert_eq!(
+            dsl.get_many_num(res2[1]).unwrap(),
+            reformat_qm31_to_dsl_element(a)
+        );
+
+        dsl.set_program_output("qm31", res1[0]).unwrap();
+        dsl.set_program_output("qm31", res1[1]).unwrap();
+        dsl.set_program_output("qm31", res2[0]).unwrap();
+        dsl.set_program_output("qm31", res2[1]).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { a }
+                { b }
+                { b }
+                { a }
             },
         )
         .unwrap();

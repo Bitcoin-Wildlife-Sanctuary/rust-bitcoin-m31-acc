@@ -10,7 +10,7 @@ use bitcoin_script_dsl::dsl::{Element, DSL};
 use fibonacci_example::FIB_LOG_SIZE;
 use std::collections::HashMap;
 
-pub fn generate_dsl(_: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL> {
+pub fn generate_dsl(_: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DSL> {
     let mut dsl = DSL::new();
     load_data_types(&mut dsl)?;
     load_functions(&mut dsl)?;
@@ -100,7 +100,7 @@ pub fn generate_dsl(_: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL>
     let (pack_fiat_shamir_verify2_hash, pack_fiat_shamir_verify2) =
         zip_elements(&mut dsl, &list_fiat_shamir_verify2)?;
 
-    cache.insert("fiat_shamir_verify2", pack_fiat_shamir_verify2);
+    cache.insert("fiat_shamir_verify2".to_string(), pack_fiat_shamir_verify2);
     dsl.set_program_output("hash", pack_fiat_shamir_verify2_hash)?;
     dsl.set_program_output("hash", after_fiat_shamir_hash)?;
 

@@ -9,7 +9,7 @@ use fibonacci_example::FIB_LOG_SIZE;
 use std::collections::HashMap;
 use stwo_prover::core::poly::circle::CanonicCoset;
 
-pub fn generate_dsl(_: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL> {
+pub fn generate_dsl(_: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DSL> {
     let mut dsl = DSL::new();
     load_data_types(&mut dsl)?;
     load_functions(&mut dsl)?;
@@ -111,7 +111,7 @@ pub fn generate_dsl(_: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL>
     let (pack_column_line_coeff2_hash, pack_column_line_coeff2) =
         zip_elements(&mut dsl, &list_column_line_coeff2)?;
 
-    cache.insert("column_line_coeff2", pack_column_line_coeff2);
+    cache.insert("column_line_coeff2".to_string(), pack_column_line_coeff2);
     dsl.set_program_output("hash", pack_column_line_coeff2_hash)?;
     dsl.set_program_output("hash", after_fiat_shamir_hash)?;
 

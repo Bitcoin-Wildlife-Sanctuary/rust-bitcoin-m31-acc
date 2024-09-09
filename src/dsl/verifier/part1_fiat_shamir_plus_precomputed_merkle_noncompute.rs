@@ -19,7 +19,7 @@ use stwo_prover::core::fields::IntoSlice;
 use stwo_prover::core::prover::{LOG_BLOWUP_FACTOR, PROOF_OF_WORK_BITS};
 use stwo_prover::core::vcs::sha256_hash::Sha256Hasher;
 
-pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<DSL> {
+pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DSL> {
     let mut dsl = DSL::new();
 
     load_data_types(&mut dsl)?;
@@ -241,7 +241,11 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<
                     proof.siblings.iter().map(|x| x.to_vec()).collect_vec(),
                 ),
         )?;
-        twiddles_vars.push(res[res.len() - 5..res.len()].to_vec());
+
+        let mut picked_res = vec![];
+        picked_res.extend_from_slice(&res[res.len() - 8..res.len() - 3]);
+        picked_res.extend_from_slice(&res[res.len() - 2..res.len()]);
+        twiddles_vars.push(picked_res);
     }
 
     // results of interest:
@@ -324,8 +328,8 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<&str, Zipper>) -> Result<
     let (pack_after_fiat_shamir_hash, pack_after_fiat_shamir) =
         zip_elements(&mut dsl, &list_after_fiat_shamir)?;
 
-    cache.insert("fiat_shamir_verify1", pack_fiat_shamir_verify1);
-    cache.insert("after_fiat_shamir", pack_after_fiat_shamir);
+    cache.insert("fiat_shamir_verify1".to_string(), pack_fiat_shamir_verify1);
+    cache.insert("after_fiat_shamir".to_string(), pack_after_fiat_shamir);
 
     dsl.set_program_output("hash", pack_fiat_shamir_verify1_hash)?;
     dsl.set_program_output("hash", pack_after_fiat_shamir_hash)?;
