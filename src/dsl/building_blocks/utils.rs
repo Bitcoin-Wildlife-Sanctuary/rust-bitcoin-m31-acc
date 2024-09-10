@@ -1,6 +1,5 @@
 use crate::algorithms::utils::OP_HINT;
 use anyhow::Result;
-use bitcoin::opcodes::Ordinary::{OP_FROMALTSTACK, OP_ROT, OP_TOALTSTACK};
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_script::script;
 use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};

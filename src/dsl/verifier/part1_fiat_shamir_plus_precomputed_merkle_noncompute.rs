@@ -208,7 +208,15 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
                         .collect_vec(),
                 ),
         )?;
-        composition_queried_results.push((res[0], res[1]));
+        let left_first = dsl.execute("cm31_from_real_and_imag", &[res[0], res[1]])?[0];
+        let left_second = dsl.execute("cm31_from_real_and_imag", &[res[2], res[3]])?[0];
+        let left = dsl.execute("qm31_from_first_and_second", &[left_first, left_second])?[0];
+
+        let right_first = dsl.execute("cm31_from_real_and_imag", &[res[4], res[5]])?[0];
+        let right_second = dsl.execute("cm31_from_real_and_imag", &[res[6], res[7]])?[0];
+        let right = dsl.execute("qm31_from_first_and_second", &[right_first, right_second])?[0];
+
+        composition_queried_results.push((left, right));
     }
 
     // Step 13: handle the precomputed twiddle factors for each queries

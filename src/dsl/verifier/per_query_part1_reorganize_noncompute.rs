@@ -91,27 +91,55 @@ pub fn generate_dsl(
         (res[20], res[21]),
     ];
 
-    // Step 1: store the denominator inverses related variables into a pack
-    let mut list_denominator_inverses = vec![];
-    list_denominator_inverses.push(prepared_oods_shifted_by_0_var.0);
-    list_denominator_inverses.push(prepared_oods_shifted_by_0_var.1);
-    list_denominator_inverses.push(prepared_oods_shifted_by_1_var.0);
-    list_denominator_inverses.push(prepared_oods_shifted_by_1_var.1);
-    list_denominator_inverses.push(prepared_oods_shifted_by_2_var.0);
-    list_denominator_inverses.push(prepared_oods_shifted_by_2_var.1);
-    list_denominator_inverses.push(prepared_oods_var.0);
-    list_denominator_inverses.push(prepared_oods_var.1);
-    list_denominator_inverses.push(twiddles_vars[5]);
-    list_denominator_inverses.push(twiddles_vars[6]);
+    // Step 1: store the numerator related variables into a pack
+    let mut list_num2 = vec![];
+    list_num2.push(twiddles_vars[6]);
+    list_num2.push(composition_queried_results.0);
+    list_num2.push(composition_queried_results.1);
+    for column_line_coeff_composition_var in column_line_coeff_composition_vars.iter() {
+        list_num2.push(column_line_coeff_composition_var.0);
+        list_num2.push(column_line_coeff_composition_var.1);
+    }
+    list_num2.push(alphas[0]);
 
-    // Step 2: store the denominator inverses related variables into a pack
-    let (pack_cur_denominator_inverses_hash, pack_cur_denominator_inverses) =
-        zip_elements(&mut dsl, &list_denominator_inverses)?;
+    // Step 2: store the numerator related variables into a pack
+    let (pack_cur_num2_hash, pack_cur_num2) = zip_elements(&mut dsl, &list_num2)?;
 
-    let name = format!("query{}_denominator_inverses", query_idx);
-    cache.insert(name, pack_cur_denominator_inverses);
+    let name = format!("query{}_num2", query_idx);
+    cache.insert(name, pack_cur_num2);
 
-    // Step 3: allocate the part for FRI folding
+    // Step 3: store the denominator inverses related variables into a pack
+    let mut list_num_denom_1 = vec![];
+    list_num_denom_1.push(prepared_oods_shifted_by_0_var.0);
+    list_num_denom_1.push(prepared_oods_shifted_by_0_var.1);
+    list_num_denom_1.push(prepared_oods_shifted_by_1_var.0);
+    list_num_denom_1.push(prepared_oods_shifted_by_1_var.1);
+    list_num_denom_1.push(prepared_oods_shifted_by_2_var.0);
+    list_num_denom_1.push(prepared_oods_shifted_by_2_var.1);
+    list_num_denom_1.push(prepared_oods_var.0);
+    list_num_denom_1.push(prepared_oods_var.1);
+    list_num_denom_1.push(twiddles_vars[5]);
+    list_num_denom_1.push(twiddles_vars[6]);
+
+    list_num_denom_1.push(trace_queried_results.0);
+    list_num_denom_1.push(trace_queried_results.1);
+    list_num_denom_1.push(column_line_coeff_trace_0_var.0);
+    list_num_denom_1.push(column_line_coeff_trace_0_var.1);
+    list_num_denom_1.push(column_line_coeff_trace_1_var.0);
+    list_num_denom_1.push(column_line_coeff_trace_1_var.1);
+    list_num_denom_1.push(column_line_coeff_trace_2_var.0);
+    list_num_denom_1.push(column_line_coeff_trace_2_var.1);
+
+    list_num_denom_1.push(pack_cur_num2_hash);
+
+    // Step 4: store the denominator inverses related variables into a pack
+    let (pack_cur_num_denom1_hash, pack_cur_num_denom1) =
+        zip_elements(&mut dsl, &list_num_denom_1)?;
+
+    let name = format!("query{}_num_denom1", query_idx);
+    cache.insert(name, pack_cur_num_denom1);
+
+    // Step 5: allocate the part for FRI folding
     let mut list_fri_folding = vec![];
     list_fri_folding.push(query_var);
     list_fri_folding.push(last_layer_var);
@@ -121,9 +149,9 @@ pub fn generate_dsl(
         list_fri_folding.push(folding_intermediate_results_var.0);
         list_fri_folding.push(folding_intermediate_results_var.1);
     }
-    list_fri_folding.push(pack_cur_denominator_inverses_hash);
+    list_fri_folding.push(pack_cur_num_denom1_hash);
 
-    // Step 4: store the FRI folding related variables into a pack
+    // Step 6: store the FRI folding related variables into a pack
     let (pack_cur_fri_folding_hash, pack_cur_fri_folding) =
         zip_elements(&mut dsl, &list_fri_folding)?;
 

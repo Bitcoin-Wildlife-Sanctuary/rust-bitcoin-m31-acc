@@ -26,7 +26,9 @@ pub mod per_query_part2_folding_compute;
 
 pub mod per_query_part3_folding_compute;
 
-pub mod per_query_part4_denominator_inverses_compute;
+pub mod per_query_part4_num_denom1;
+
+pub mod per_query_part5_num2_compute;
 
 #[cfg(test)]
 mod test {
@@ -187,7 +189,32 @@ mod test {
                 dsl,
                 script! {
                     { cache.get("global_state").unwrap().hash }
-                    { cache.get(&format!("query{}_denominator_inverses", query_idx)).unwrap().hash }
+                    { cache.get(&format!("query{}_num_denom1", query_idx)).unwrap().hash }
+                },
+            )
+            .unwrap();
+
+            let dsl =
+                super::per_query_part4_num_denom1::generate_dsl(&hints, &mut cache, query_idx)
+                    .unwrap();
+            test_program(
+                dsl,
+                script! {
+                    { cache.get("global_state").unwrap().hash }
+                    { cache.get(&format!("query{}_num_denom1_result", query_idx)).unwrap().hash }
+                    { cache.get(&format!("query{}_num2", query_idx)).unwrap().hash }
+                },
+            )
+            .unwrap();
+
+            let dsl =
+                super::per_query_part5_num2_compute::generate_dsl(&hints, &mut cache, query_idx)
+                    .unwrap();
+            test_program(
+                dsl,
+                script! {
+                    { cache.get("global_state").unwrap().hash }
+                    { cache.get(&format!("query{}_aggregation1_result", query_idx)).unwrap().hash }
                 },
             )
             .unwrap();

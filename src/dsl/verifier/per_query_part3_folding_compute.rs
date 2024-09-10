@@ -5,7 +5,6 @@ use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use std::collections::HashMap;
-use std::hash::Hash;
 
 pub fn generate_dsl(
     _: &Hints,
