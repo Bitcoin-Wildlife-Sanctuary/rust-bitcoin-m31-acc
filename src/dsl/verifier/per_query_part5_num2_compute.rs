@@ -55,7 +55,7 @@ pub fn generate_dsl(
             .get(format!("query{}_num2", query_idx).as_str())
             .unwrap(),
     )?;
-    assert_eq!(res.len(), 12);
+    assert_eq!(res.len(), 13);
 
     let y_var = res[0];
     let composition_queried_results = (res[1], res[2]);
@@ -66,6 +66,7 @@ pub fn generate_dsl(
         (res[9], res[10]),
     ];
     let alpha6_var = res[11];
+    let pack_cur_aggregation2_hash = res[12];
 
     // Step 1: push the table
     let table = dsl.execute("push_table", &[])?[0];
@@ -171,6 +172,7 @@ pub fn generate_dsl(
     let alpha6u1a1 = qm31_mul_cm31_limbs(&mut dsl, table, alpha6_var, u1a1_limbs)?;
 
     let mut list_aggregation1_result = vec![];
+    list_aggregation1_result.push(y_var);
     list_aggregation1_result.push(u2a2);
     list_aggregation1_result.push(u3a3);
     list_aggregation1_result.push(v1b1);
@@ -189,14 +191,15 @@ pub fn generate_dsl(
     list_aggregation1_result.push(numerator_composition_3.1);
 
     // Step 4: store the denominator inverses related variables into a pack
-    let (pack_aggregation1_result_hash, pack_aggregation1_result) =
+    let (pack_cur_aggregation1_result_hash, pack_cur_aggregation1_result) =
         zip_elements(&mut dsl, &list_aggregation1_result)?;
 
     let name = format!("query{}_aggregation1_result", query_idx);
-    cache.insert(name, pack_aggregation1_result);
+    cache.insert(name, pack_cur_aggregation1_result);
 
     dsl.set_program_output("hash", global_state_hash)?;
-    dsl.set_program_output("hash", pack_aggregation1_result_hash)?;
+    dsl.set_program_output("hash", pack_cur_aggregation1_result_hash)?;
+    dsl.set_program_output("hash", pack_cur_aggregation2_hash)?;
 
     Ok(dsl)
 }

@@ -91,7 +91,21 @@ pub fn generate_dsl(
         (res[20], res[21]),
     ];
 
-    // Step 1: store the numerator related variables into a pack
+    // Step 1: store the aggregation related variables into a pack
+    let mut list_aggregation2 = vec![];
+    list_aggregation2.extend_from_slice(&alphas);
+    list_aggregation2.push(circle_poly_alpha_var);
+    list_aggregation2.push(query_var);
+    list_aggregation2.push(folding_intermediate_results_vars[0].0);
+    list_aggregation2.push(folding_intermediate_results_vars[0].1);
+
+    let (pack_cur_aggregation2_hash, pack_cur_aggregation2) =
+        zip_elements(&mut dsl, &list_aggregation2)?;
+
+    let name = format!("query{}_aggregation2", query_idx);
+    cache.insert(name, pack_cur_aggregation2);
+
+    // Step 2: store the numerator related variables into a pack
     let mut list_num2 = vec![];
     list_num2.push(twiddles_vars[6]);
     list_num2.push(composition_queried_results.0);
@@ -101,8 +115,8 @@ pub fn generate_dsl(
         list_num2.push(column_line_coeff_composition_var.1);
     }
     list_num2.push(alphas[0]);
+    list_num2.push(pack_cur_aggregation2_hash);
 
-    // Step 2: store the numerator related variables into a pack
     let (pack_cur_num2_hash, pack_cur_num2) = zip_elements(&mut dsl, &list_num2)?;
 
     let name = format!("query{}_num2", query_idx);
@@ -132,14 +146,13 @@ pub fn generate_dsl(
 
     list_num_denom_1.push(pack_cur_num2_hash);
 
-    // Step 4: store the denominator inverses related variables into a pack
     let (pack_cur_num_denom1_hash, pack_cur_num_denom1) =
         zip_elements(&mut dsl, &list_num_denom_1)?;
 
     let name = format!("query{}_num_denom1", query_idx);
     cache.insert(name, pack_cur_num_denom1);
 
-    // Step 5: allocate the part for FRI folding
+    // Step 4: allocate the part for FRI folding
     let mut list_fri_folding = vec![];
     list_fri_folding.push(query_var);
     list_fri_folding.push(last_layer_var);
@@ -151,7 +164,7 @@ pub fn generate_dsl(
     }
     list_fri_folding.push(pack_cur_num_denom1_hash);
 
-    // Step 6: store the FRI folding related variables into a pack
+    // Step 5: store the FRI folding related variables into a pack
     let (pack_cur_fri_folding_hash, pack_cur_fri_folding) =
         zip_elements(&mut dsl, &list_fri_folding)?;
 
@@ -160,8 +173,6 @@ pub fn generate_dsl(
 
     dsl.set_program_output("hash", global_state_hash)?;
     dsl.set_program_output("hash", pack_cur_fri_folding_hash)?;
-
-    // Handle the rest later on
 
     Ok(dsl)
 }
