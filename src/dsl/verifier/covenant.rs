@@ -78,7 +78,7 @@ impl FibonacciAllInformation {
     }
 }
 
-fn compute_all_information() -> FibonacciAllInformation {
+pub fn compute_all_information() -> FibonacciAllInformation {
     let mut scripts = vec![];
     let mut witnesses = vec![];
 
@@ -454,11 +454,11 @@ mod test {
         // Note that in many situations, the fee rate is only 2 sat/vByte.
 
         let mut fees = vec![
-            58975, 90601, 58898, 88459, 37709, 67963, 77924, 75348, 38752, 48055,
+            58975, 90601, 58961, 88459, 37709, 67963, 77924, 75411, 38752, 48055,
         ];
 
         for _ in 0..8 {
-            fees.extend_from_slice(&[11522, 45381, 61999, 58618, 50848, 56889, 62510, 25634]);
+            fees.extend_from_slice(&[11522, 45416, 62055, 58618, 50848, 56889, 62517, 25634]);
         }
 
         println!(
