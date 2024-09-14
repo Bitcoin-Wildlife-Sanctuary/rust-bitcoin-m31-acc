@@ -6,7 +6,7 @@ use clap::Parser;
 use colored::Colorize;
 use covenants_gadgets::test::SimulationInstruction;
 use covenants_gadgets::{get_script_pub_key, get_tx, CovenantInput, CovenantProgram, DUST_AMOUNT};
-use rust_bitcoin_m31_acc::dsl::verifier::covenant::{
+use rust_bitcoin_m31_acc::dsl::fibonacci::covenant::{
     compute_all_information, FibonacciVerifierProgram, FibonacciVerifierState,
     FIBONACCI_ALL_INFORMATION,
 };

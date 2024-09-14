@@ -1,5 +1,5 @@
 use crate::algorithms::utils::OP_HINT;
-use crate::dsl::verifier::hints::Hints;
+use crate::dsl::fibonacci::hints::Hints;
 use anyhow::Result;
 use bitcoin::script::write_scriptint;
 use bitcoin_circle_stark::treepp::*;
@@ -442,7 +442,7 @@ impl CovenantProgram for FibonacciVerifierProgram {
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::verifier::covenant::{
+    use crate::dsl::fibonacci::covenant::{
         compute_all_information, FibonacciVerifierProgram, FibonacciVerifierState,
         FIBONACCI_ALL_INFORMATION,
     };

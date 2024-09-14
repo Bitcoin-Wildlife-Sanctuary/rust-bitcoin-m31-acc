@@ -1,8 +1,9 @@
 pub mod building_blocks;
+pub mod fibonacci;
 pub mod modules;
+pub mod plonk;
 pub mod tools;
 pub mod utils;
-pub mod verifier;
 
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{ElementType, DSL};

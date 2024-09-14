@@ -40,7 +40,7 @@ pub mod covenant;
 
 #[cfg(test)]
 mod test {
-    use crate::dsl::verifier::hints::Hints;
+    use crate::dsl::fibonacci::hints::Hints;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script_dsl::test_program;
     use std::collections::HashMap;

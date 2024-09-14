@@ -220,7 +220,7 @@ mod test {
 
         let num = prng.gen_range(0..=1023);
 
-        let expected = vec![num >> 2, num >> 3, num >> 4, num >> 5, num >> 6];
+        let expected = vec![num >> 1, num >> 2, num >> 3, num >> 4, num >> 5];
 
         let mut dsl = DSL::new();
         load_data_types(&mut dsl).unwrap();

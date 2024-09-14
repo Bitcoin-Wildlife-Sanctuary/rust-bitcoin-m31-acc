@@ -1,16 +1,15 @@
 use crate::dsl::building_blocks::point::get_random_point_skipped;
 use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
+use crate::dsl::fibonacci::hints::{Hints, FIB_LOG_SIZE};
 use crate::dsl::load_data_types;
 use crate::dsl::load_functions;
 use crate::dsl::tools::{zip_elements, Zipper};
-use crate::dsl::verifier::hints::Hints;
 use anyhow::Result;
 use bitcoin_circle_stark::precomputed_merkle_tree::{
     get_precomputed_merkle_tree_roots, PRECOMPUTED_MERKLE_TREE_ROOTS,
 };
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use bitcoin_script_dsl::options::Options;
-use fibonacci_example::FIB_LOG_SIZE;
 use itertools::Itertools;
 use std::collections::HashMap;
 use stwo_prover::core::channel::Sha256Channel;
@@ -103,11 +102,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     // Step 7: get the FRI trees' commitments, mix them with the channel one by one, and obtain the folding alphas
     let mut fri_tree_commitments_vars = vec![];
     let mut folding_alphas_vars = vec![];
-    for (fri_tree_commitment, _) in hints
-        .fiat_shamir_hints
-        .fri_commitment_and_folding_hints
-        .iter()
-    {
+    for fri_tree_commitment in hints.fiat_shamir_hints.fri_commitments.iter() {
         let fri_tree_commitment_var =
             dsl.alloc_hint("hash", Element::Str(fri_tree_commitment.as_ref().to_vec()))?;
         fri_tree_commitments_vars.push(fri_tree_commitment_var);

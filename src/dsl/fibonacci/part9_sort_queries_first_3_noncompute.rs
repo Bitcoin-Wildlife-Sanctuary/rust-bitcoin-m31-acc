@@ -1,5 +1,5 @@
+use crate::dsl::fibonacci::hints::Hints;
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
-use crate::dsl::verifier::hints::Hints;
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
