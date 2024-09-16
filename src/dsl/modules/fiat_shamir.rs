@@ -1,6 +1,6 @@
 use crate::algorithms::utils::convert_m31_to_limbs;
 use crate::dsl::building_blocks::point::{add_constant_m31_point_x_only, point_double_x};
-use crate::dsl::building_blocks::qm31::qm31_mul_m31_limbs;
+use crate::dsl::building_blocks::qm31::{qm31_mul_m31_limbs, reformat_qm31_to_dsl_element};
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
@@ -71,7 +71,6 @@ pub fn step_constraint_denominator_inverse_evaluation(
     log_size: u32,
 ) -> Result<usize> {
     let constraint_zero_domain = Coset::subgroup(log_size);
-
     let denominator = coset_vanishing(dsl, table, z_x, z_y, constraint_zero_domain)?;
 
     let denominator_limbs = dsl.execute("qm31_to_limbs", &[denominator])?[0];

@@ -4,7 +4,7 @@ use crate::dsl::building_blocks::qm31::{
 };
 use crate::dsl::fibonacci::hints::FIB_LOG_SIZE;
 use crate::dsl::plonk::hints::Hints;
-use crate::dsl::tools::Zipper;
+use crate::dsl::tools::{zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
@@ -216,6 +216,167 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
         trace_b_val_queried_results.push((res[2], res[6]));
         trace_c_val_queried_results.push((res[3], res[7]));
     }
+
+    // Step 13: query the interaction commitment on the queries
+    let mut interaction_ab_queried_results = vec![];
+    let mut interaction_cum_queried_results = vec![];
+    for (&query, proof) in queries
+        .iter()
+        .zip(hints.fiat_shamir_hints.merkle_proofs_interactions.iter())
+    {
+        let res = dsl.execute_with_options(
+            "merkle_twin_tree_8",
+            &[interaction_commitment_var, query],
+            &Options::new()
+                .with_multi_u32("left", proof.left.iter().map(|x| x.0).collect_vec())
+                .with_multi_u32("right", proof.right.iter().map(|x| x.0).collect_vec())
+                .with_multi_binary(
+                    "path",
+                    proof
+                        .path
+                        .siblings
+                        .iter()
+                        .map(|x| x.as_ref().to_vec())
+                        .collect_vec(),
+                ),
+        )?;
+
+        let left_first = dsl.execute("cm31_from_real_and_imag", &[res[0], res[1]])?[0];
+        let left_second = dsl.execute("cm31_from_real_and_imag", &[res[2], res[3]])?[0];
+        let left = dsl.execute("qm31_from_first_and_second", &[left_first, left_second])?[0];
+
+        let right_first = dsl.execute("cm31_from_real_and_imag", &[res[8], res[9]])?[0];
+        let right_second = dsl.execute("cm31_from_real_and_imag", &[res[10], res[11]])?[0];
+        let right = dsl.execute("qm31_from_first_and_second", &[right_first, right_second])?[0];
+
+        interaction_ab_queried_results.push((left, right));
+
+        let left_first = dsl.execute("cm31_from_real_and_imag", &[res[4], res[5]])?[0];
+        let left_second = dsl.execute("cm31_from_real_and_imag", &[res[6], res[7]])?[0];
+        let left = dsl.execute("qm31_from_first_and_second", &[left_first, left_second])?[0];
+
+        let right_first = dsl.execute("cm31_from_real_and_imag", &[res[12], res[13]])?[0];
+        let right_second = dsl.execute("cm31_from_real_and_imag", &[res[14], res[15]])?[0];
+        let right = dsl.execute("qm31_from_first_and_second", &[right_first, right_second])?[0];
+
+        interaction_cum_queried_results.push((left, right));
+    }
+
+    // Organize the queried results into different packs
+
+    let mut list_trace_queried_results = vec![];
+    for trace_mult_queried_result in trace_mult_queried_results.iter() {
+        list_trace_queried_results.push(trace_mult_queried_result.0);
+        list_trace_queried_results.push(trace_mult_queried_result.1);
+    }
+    for trace_a_val_queried_result in trace_a_val_queried_results.iter() {
+        list_trace_queried_results.push(trace_a_val_queried_result.0);
+        list_trace_queried_results.push(trace_a_val_queried_result.1);
+    }
+    for trace_b_val_queried_result in trace_b_val_queried_results.iter() {
+        list_trace_queried_results.push(trace_b_val_queried_result.0);
+        list_trace_queried_results.push(trace_b_val_queried_result.1);
+    }
+    for trace_c_val_queried_result in trace_c_val_queried_results.iter() {
+        list_trace_queried_results.push(trace_c_val_queried_result.0);
+        list_trace_queried_results.push(trace_c_val_queried_result.1);
+    }
+
+    let (pack_trace_queried_results_hash, pack_trace_queried_results) =
+        zip_elements(&mut dsl, &list_trace_queried_results)?;
+
+    cache.insert(
+        "trace_queried_results".to_string(),
+        pack_trace_queried_results,
+    );
+
+    let mut list_interaction_queried_results = vec![];
+    for interaction_ab_queried_result in interaction_ab_queried_results.iter() {
+        list_interaction_queried_results.push(interaction_ab_queried_result.0);
+        list_interaction_queried_results.push(interaction_ab_queried_result.1);
+    }
+    for interaction_cum_queried_result in interaction_cum_queried_results.iter() {
+        list_interaction_queried_results.push(interaction_cum_queried_result.0);
+        list_interaction_queried_results.push(interaction_cum_queried_result.1);
+    }
+
+    let (pack_interaction_queried_results_hash, pack_interaction_queried_results) =
+        zip_elements(&mut dsl, &list_interaction_queried_results)?;
+
+    cache.insert(
+        "interaction_queried_results".to_string(),
+        pack_interaction_queried_results,
+    );
+
+    let mut list_fri = vec![];
+    list_fri.extend_from_slice(&fri_tree_commitments_vars);
+    list_fri.extend_from_slice(&folding_alphas_vars);
+    let (pack_fri_hash, pack_fri) = zip_elements(&mut dsl, &list_fri)?;
+
+    cache.insert("fri".to_string(), pack_fri);
+
+    let mut list_fiat_shamir2 = vec![
+        constant_commitment_var,
+        composition_commitment_var,
+        pack_trace_queried_results_hash,
+        pack_interaction_queried_results_hash,
+        pack_fri_hash,
+    ];
+    list_fiat_shamir2.extend_from_slice(&queries);
+
+    let (pack_fiat_shamir2_hash, pack_fiat_shamir2) = zip_elements(&mut dsl, &list_fiat_shamir2)?;
+
+    cache.insert("fiat_shamir2".to_string(), pack_fiat_shamir2);
+
+    let claimed_sum_divided_var = dsl.alloc_hint(
+        "qm31",
+        Element::ManyNum(reformat_qm31_to_dsl_element(
+            hints.fiat_shamir_hints.claimed_sum_divided,
+        )),
+    )?;
+
+    let mut list_fiat_shamir1_result = vec![
+        z_var,
+        alpha_var,
+        composition_fold_random_coeff_var,
+        before_oods_channel_var,
+        line_batch_random_coeff_var,
+        fri_fold_random_coeff_var,
+        claimed_sum_divided_var,
+    ];
+
+    list_fiat_shamir1_result.extend_from_slice(&trace_oods_values_vars);
+    list_fiat_shamir1_result.extend_from_slice(&interaction_oods_values_vars);
+    list_fiat_shamir1_result.extend_from_slice(&constant_oods_values_vars);
+    list_fiat_shamir1_result.extend_from_slice(&composition_oods_raw_values_vars);
+
+    let (pack_fiat_shamir1_result_hash, pack_fiat_shamir1_result) =
+        zip_elements(&mut dsl, &list_fiat_shamir1_result)?;
+
+    cache.insert("fiat_shamir1_result".to_string(), pack_fiat_shamir1_result);
+
+    dsl.set_program_output("hash", pack_fiat_shamir2_hash)?;
+    dsl.set_program_output("hash", pack_fiat_shamir1_result_hash)?;
+
+    // fiat_shamir2
+    // - constant_commitment_var
+    // - composition_commitment_var
+    // - trace_queried_results_hash
+    // - interaction_queried_results_hash
+    // - fri_hash
+    // - queries
+    //
+    // fiat_shamir1_result
+    // - z_var
+    // - alpha_var
+    // - composition_fold_random_coeff_var
+    // - before_oods_channel_var
+    // - line_batch_random_coeff_var
+    // - fri_fold_random_coeff_var
+    // - trace_oods_values_vars
+    // - interaction_oods_values_vars
+    // - constant_oods_values_vars
+    // - composition_oods_raw_values_vars
 
     Ok(dsl)
 }

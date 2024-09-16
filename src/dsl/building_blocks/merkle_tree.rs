@@ -28,7 +28,9 @@ fn query_and_verify_merkle_twin_tree<const N: usize>(
     let path = options.get_multi_binary("path")?;
 
     if left.len() != right.len() || left.len() != N {
-        return Err(Error::msg("The number of elements on the leaf mismatches"));
+        return Err(Error::msg(
+            "The number of elements on the leaf mismatches do not match",
+        ));
     }
 
     // verify the Merkle tree externally first
@@ -285,6 +287,19 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
             output: vec!["m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31"],
         },
     )?;
+
+    dsl.add_function(
+        "merkle_twin_tree_8",
+        FunctionWithOptionsMetadata {
+            trace_generator: query_and_verify_merkle_twin_tree::<8>,
+            script_generator: query_and_verify_merkle_twin_tree_gadget::<8>,
+            input: vec!["hash", "position"],
+            output: vec![
+                "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31", "m31",
+                "m31", "m31", "m31", "m31",
+            ],
+        },
+    )?;
     dsl.add_function(
         "raw_merkle_tree",
         FunctionWithOptionsMetadata {
@@ -338,6 +353,89 @@ mod test {
     use stwo_prover::core::fields::m31::M31;
     use stwo_prover::core::vcs::ops::MerkleHasher;
     use stwo_prover::core::vcs::sha256_merkle::Sha256MerkleHasher;
+
+    #[test]
+    fn test_merkle_twin_tree_8() {
+        let mut prng = ChaCha8Rng::seed_from_u64(0);
+
+        let logn = 5;
+
+        let mut last_layer = vec![];
+        for _ in 0..(1 << logn) {
+            let a = get_rand_qm31(&mut prng);
+            let b = get_rand_qm31(&mut prng);
+
+            let mut ab = a.to_m31_array().to_vec();
+            ab.extend(b.to_m31_array());
+            last_layer.push(ab);
+        }
+
+        let merkle_tree = MerkleTree::new(last_layer.clone());
+
+        let mut pos: u32 = prng.gen();
+        pos &= (1 << logn) - 1;
+        if pos % 2 == 1 {
+            pos -= 1;
+        }
+
+        let proof = MerkleTreeTwinProof::query(&merkle_tree, pos as usize);
+        assert!(proof.verify(&merkle_tree.root_hash, logn, pos as usize));
+
+        let mut dsl = DSL::new();
+
+        load_data_types(&mut dsl).unwrap();
+        load_functions(&mut dsl).unwrap();
+
+        let root_hash_var = dsl
+            .alloc_input(
+                "hash",
+                Element::Str(merkle_tree.root_hash.as_ref().to_vec()),
+            )
+            .unwrap();
+        let pos_var = dsl
+            .alloc_input("position", Element::Num(pos as i32))
+            .unwrap();
+
+        let res = dsl
+            .execute_with_options(
+                "merkle_twin_tree_8",
+                &[root_hash_var, pos_var],
+                &Options::new()
+                    .with_multi_u32("left", proof.left.iter().map(|x| x.0).collect_vec())
+                    .with_multi_u32("right", proof.right.iter().map(|x| x.0).collect_vec())
+                    .with_multi_binary(
+                        "path",
+                        proof
+                            .path
+                            .siblings
+                            .iter()
+                            .map(|x| x.as_ref().to_vec())
+                            .collect_vec(),
+                    ),
+            )
+            .unwrap();
+
+        for (&idx, expected) in res.iter().zip(proof.left.iter().chain(proof.right.iter())) {
+            assert_eq!(dsl.get_num(idx).unwrap(), expected.0 as i32);
+        }
+
+        for &idx in res.iter() {
+            dsl.set_program_output("m31", idx).unwrap();
+        }
+
+        test_program(
+            dsl,
+            script! {
+                for elem in proof.left.iter() {
+                    { *elem }
+                }
+                for elem in proof.right.iter() {
+                    { *elem }
+                }
+            },
+        )
+        .unwrap();
+    }
 
     #[test]
     fn test_merkle_twin_tree_4() {

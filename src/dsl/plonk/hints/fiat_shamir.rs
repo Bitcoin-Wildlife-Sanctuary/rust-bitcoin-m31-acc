@@ -1,3 +1,4 @@
+use crate::dsl::plonk::hints::LOG_N_ROWS;
 use bitcoin_circle_stark::fri::QueriesWithHint;
 use bitcoin_circle_stark::merkle_tree::MerkleTreeTwinProof;
 use bitcoin_circle_stark::pow::PoWHint;
@@ -6,18 +7,34 @@ use stwo_prover::constraint_framework::logup::LookupElements;
 use stwo_prover::core::air::{Component, Components};
 use stwo_prover::core::channel::{Channel, Sha256Channel};
 use stwo_prover::core::circle::{CirclePoint, Coset};
+use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::fields::qm31::{SecureField, QM31};
 use stwo_prover::core::fields::secure_column::SECURE_EXTENSION_DEGREE;
 use stwo_prover::core::fri::{
-    get_opening_positions, CirclePolyDegreeBound, FriLayerVerifier, FriVerificationError, FOLD_STEP,
+    get_opening_positions, CirclePolyDegreeBound, FriConfig, FriLayerVerifier,
+    FriVerificationError, FOLD_STEP,
 };
 use stwo_prover::core::pcs::{CommitmentSchemeVerifier, PcsConfig, TreeVec};
-use stwo_prover::core::poly::line::{LineDomain, LinePoly};
-use stwo_prover::core::prover::{sampled_values_to_mask, StarkProof, VerificationError};
+use stwo_prover::core::poly::line::LineDomain;
+use stwo_prover::core::prover::{
+    sampled_values_to_mask, StarkProof, VerificationError, LOG_BLOWUP_FACTOR,
+    LOG_LAST_LAYER_DEGREE_BOUND, N_QUERIES,
+};
 use stwo_prover::core::queries::Queries;
 use stwo_prover::core::vcs::sha256_hash::{Sha256Hash, Sha256Hasher};
 use stwo_prover::core::vcs::sha256_merkle::{Sha256MerkleChannel, Sha256MerkleHasher};
 use stwo_prover::examples::plonk::PlonkComponent;
+
+pub struct FiatShamirOutput {
+    /// log blowup factor
+    pub fri_log_blowup_factor: u32,
+
+    /// log degree bound of column
+    pub max_column_log_degree_bound: u32,
+
+    /// queries' parent indices.
+    pub queries_parents: Vec<usize>,
+}
 
 pub struct FiatShamirHints {
     /// commitment from the proof, including trace commitment, interaction commitment, constant commitment, and composition commitment
@@ -58,6 +75,9 @@ pub struct FiatShamirHints {
 
     /// Merkle proofs for the composition Merkle tree.
     pub merkle_proofs_compositions: Vec<MerkleTreeTwinProof>,
+
+    /// Claimed sum divided by the range
+    pub claimed_sum_divided: SecureField,
 }
 
 /// Generate Fiat Shamir hints along with fri inputs
@@ -66,7 +86,7 @@ pub fn compute_fiat_shamir_hints(
     channel: &mut Sha256Channel,
     component: &PlonkComponent,
     config: PcsConfig,
-) -> Result<FiatShamirHints, VerificationError> {
+) -> Result<(FiatShamirOutput, FiatShamirHints), VerificationError> {
     let components = Components([component as &dyn Component].to_vec());
     let mut commitment_scheme: CommitmentSchemeVerifier<Sha256MerkleChannel> =
         CommitmentSchemeVerifier::new(config);
@@ -245,10 +265,6 @@ pub fn compute_fiat_shamir_hints(
         &proof.commitment_scheme_proof.queried_values[1],
         &proof.commitment_scheme_proof.decommitments[1],
     );
-    println!(
-        "{:?}",
-        proof.commitment_scheme_proof.queried_values[1].len()
-    );
     let merkle_proofs_constants = MerkleTreeTwinProof::from_stwo_proof(
         (max_column_bound.log_degree_bound + config.fri_config.log_blowup_factor) as usize,
         &queries_parents,
@@ -331,7 +347,19 @@ pub fn compute_fiat_shamir_hints(
         queried_values_right.push(right_vec);
     }
 
-    Ok(FiatShamirHints {
+    // FRI commitment phase on OODS quotients.
+    let fri_config = FriConfig::new(LOG_LAST_LAYER_DEGREE_BOUND, LOG_BLOWUP_FACTOR, N_QUERIES);
+
+    let output = FiatShamirOutput {
+        fri_log_blowup_factor: fri_config.log_blowup_factor,
+        max_column_log_degree_bound: max_column_bound.log_degree_bound,
+        queries_parents,
+    };
+
+    let claimed_sum_divided =
+        component.claimed_sum / BaseField::from_u32_unchecked(1 << LOG_N_ROWS);
+
+    let hints = FiatShamirHints {
         commitments: [
             proof.commitments[0],
             proof.commitments[1],
@@ -366,5 +394,8 @@ pub fn compute_fiat_shamir_hints(
         merkle_proofs_interactions,
         merkle_proofs_constants,
         merkle_proofs_compositions,
-    })
+        claimed_sum_divided,
+    };
+
+    Ok((output, hints))
 }
