@@ -222,7 +222,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
 
     cache.insert("twiddles".to_string(), pack_twiddles);
 
-    let list_fiat_shamir2_result = vec![
+    let mut list_fiat_shamir2_result = vec![
         pack_trace_queried_results_hash,
         pack_interaction_queried_results_hash,
         pack_constant_queried_results_hash,
@@ -230,31 +230,12 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
         pack_twiddles_hash,
         pack_fri_hash,
     ];
+    list_fiat_shamir2_result.extend_from_slice(&queries);
 
     let (pack_fiat_shamir2_result_hash, pack_fiat_shamir2_result) =
         zip_elements(&mut dsl, &list_fiat_shamir2_result)?;
 
     cache.insert("fiat_shamir2_result".to_string(), pack_fiat_shamir2_result);
-
-    // fiat_shamir1_result
-    // - z_var
-    // - alpha_var
-    // - composition_fold_random_coeff_var
-    // - before_oods_channel_var
-    // - line_batch_random_coeff_var
-    // - fri_fold_random_coeff_var
-    // - trace_oods_values_vars
-    // - interaction_oods_values_vars
-    // - constant_oods_values_vars
-    // - composition_oods_raw_values_vars
-    //
-    // fiat_shamir2_result
-    // - trace_queried_results_hash
-    // - interaction_queried_results_hash
-    // - constant_queried_results_hash
-    // - composition_queried_results_hash
-    // - twiddles_hash
-    // - fri_hash
 
     dsl.set_program_output("hash", fiat_shamir1_result_hash)?;
     dsl.set_program_output("hash", pack_fiat_shamir2_result_hash)?;

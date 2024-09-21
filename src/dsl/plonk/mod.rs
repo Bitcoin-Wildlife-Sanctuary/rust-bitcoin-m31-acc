@@ -16,6 +16,18 @@ pub mod part7_constraint_equalverify_compute;
 
 pub mod part8_constraint_oods_shifted_and_prepared_compute;
 
+pub mod part9_alphas_compute;
+
+pub mod part10_column_line_coeffs1_compute;
+
+pub mod part11_column_line_coeffs2_compute;
+
+pub mod part12_column_line_coeffs3_compute;
+
+pub mod part13_column_line_coeffs4_compute;
+
+pub mod part14_sort_queries1_noncompute;
+
 #[cfg(test)]
 mod test {
     use crate::dsl::plonk::hints::Hints;
@@ -126,9 +138,71 @@ mod test {
             script! {
                 { cache.get("fiat_shamir1_result").unwrap().hash }
                 { cache.get("fiat_shamir2_result").unwrap().hash }
-                { cache.get("oods_with_shifted_01").unwrap().hash }
+                { cache.get("prepared_oods").unwrap().hash }
             },
         )
         .unwrap();
+
+        let dsl = super::part9_alphas_compute::generate_dsl(&hints, &mut cache).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { cache.get("fiat_shamir1_result").unwrap().hash }
+                { cache.get("fiat_shamir2_result").unwrap().hash }
+                { cache.get("prepared_oods").unwrap().hash }
+                { cache.get("alphas").unwrap().hash }
+            },
+        )
+        .unwrap();
+
+        let dsl =
+            super::part10_column_line_coeffs1_compute::generate_dsl(&hints, &mut cache).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { cache.get("column_line_coeffs1").unwrap().hash }
+            },
+        )
+        .unwrap();
+
+        let dsl =
+            super::part11_column_line_coeffs2_compute::generate_dsl(&hints, &mut cache).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { cache.get("column_line_coeffs2").unwrap().hash }
+            },
+        )
+        .unwrap();
+
+        let dsl =
+            super::part12_column_line_coeffs3_compute::generate_dsl(&hints, &mut cache).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { cache.get("column_line_coeffs3").unwrap().hash }
+            },
+        )
+        .unwrap();
+
+        let dsl =
+            super::part13_column_line_coeffs4_compute::generate_dsl(&hints, &mut cache).unwrap();
+
+        test_program(
+            dsl,
+            script! {
+                { cache.get("shared_information").unwrap().hash }
+                { cache.get("sort_queries1").unwrap().hash }
+            },
+        )
+        .unwrap();
+
+        let dsl = super::part14_sort_queries1_noncompute::generate_dsl(&hints, &mut cache).unwrap();
+
+        test_program(dsl, script! {}).unwrap();
     }
 }

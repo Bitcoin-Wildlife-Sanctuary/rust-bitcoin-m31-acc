@@ -7,7 +7,7 @@ use stwo_prover::constraint_framework::logup::LookupElements;
 use stwo_prover::core::air::{Component, Components};
 use stwo_prover::core::channel::{Channel, Sha256Channel};
 use stwo_prover::core::circle::{CirclePoint, Coset};
-use stwo_prover::core::fields::m31::BaseField;
+use stwo_prover::core::fields::m31::{BaseField, M31};
 use stwo_prover::core::fields::qm31::{SecureField, QM31};
 use stwo_prover::core::fields::secure_column::SECURE_EXTENSION_DEGREE;
 use stwo_prover::core::fri::{
@@ -20,9 +20,10 @@ use stwo_prover::core::prover::{
     sampled_values_to_mask, StarkProof, VerificationError, LOG_BLOWUP_FACTOR,
     LOG_LAST_LAYER_DEGREE_BOUND, N_QUERIES,
 };
-use stwo_prover::core::queries::Queries;
+use stwo_prover::core::queries::{Queries, SparseSubCircleDomain};
 use stwo_prover::core::vcs::sha256_hash::{Sha256Hash, Sha256Hasher};
 use stwo_prover::core::vcs::sha256_merkle::{Sha256MerkleChannel, Sha256MerkleHasher};
+use stwo_prover::core::ColumnVec;
 use stwo_prover::examples::plonk::PlonkComponent;
 
 pub struct FiatShamirOutput {
@@ -34,6 +35,27 @@ pub struct FiatShamirOutput {
 
     /// queries' parent indices.
     pub queries_parents: Vec<usize>,
+
+    /// log sizes of commitment scheme columns
+    pub commitment_scheme_column_log_sizes: TreeVec<ColumnVec<u32>>,
+
+    /// trace sample points and odds points
+    pub sampled_points: TreeVec<Vec<Vec<CirclePoint<QM31>>>>,
+
+    /// sample values
+    pub sample_values: Vec<Vec<Vec<QM31>>>,
+
+    /// query subcircle domain.
+    pub query_subcircle_domain: SparseSubCircleDomain,
+
+    /// queried values on the leaves on the left.
+    pub queried_values_left: Vec<Vec<M31>>,
+
+    /// queried values on the leaves on the right.
+    pub queried_values_right: Vec<Vec<M31>>,
+
+    /// random coefficient
+    pub line_batch_random_coeff: QM31,
 }
 
 pub struct FiatShamirHints {
@@ -125,6 +147,8 @@ pub fn compute_fiat_shamir_hints(
                 )
             })?;
 
+    let sample_values = &proof.commitment_scheme_proof.sampled_values.0;
+
     // step 5: draw fri folding coefficient with all oods values
     channel.mix_felts(
         &proof
@@ -142,6 +166,7 @@ pub fn compute_fiat_shamir_hints(
     let mut sampled_points = components.mask_points(oods_point);
     // Add the composition polynomial mask points.
     sampled_points.push(vec![vec![oods_point]; SECURE_EXTENSION_DEGREE]);
+
     let bounds = commitment_scheme
         .column_log_sizes()
         .zip_cols(&sampled_points)
@@ -354,6 +379,13 @@ pub fn compute_fiat_shamir_hints(
         fri_log_blowup_factor: fri_config.log_blowup_factor,
         max_column_log_degree_bound: max_column_bound.log_degree_bound,
         queries_parents,
+        commitment_scheme_column_log_sizes: commitment_scheme.column_log_sizes(),
+        sampled_points,
+        sample_values: sample_values.to_vec(),
+        query_subcircle_domain: query_domain.1.clone(),
+        queried_values_left,
+        queried_values_right,
+        line_batch_random_coeff,
     };
 
     let claimed_sum_divided =

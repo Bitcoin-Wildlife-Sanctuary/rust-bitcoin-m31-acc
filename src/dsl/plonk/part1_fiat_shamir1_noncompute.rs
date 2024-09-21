@@ -343,6 +343,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
         line_batch_random_coeff_var,
         fri_fold_random_coeff_var,
         claimed_sum_divided_var,
+        last_layer_var,
     ];
 
     list_fiat_shamir1_result.extend_from_slice(&trace_oods_values_vars);
@@ -357,26 +358,6 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
 
     dsl.set_program_output("hash", pack_fiat_shamir2_hash)?;
     dsl.set_program_output("hash", pack_fiat_shamir1_result_hash)?;
-
-    // fiat_shamir2
-    // - constant_commitment_var
-    // - composition_commitment_var
-    // - trace_queried_results_hash
-    // - interaction_queried_results_hash
-    // - fri_hash
-    // - queries
-    //
-    // fiat_shamir1_result
-    // - z_var
-    // - alpha_var
-    // - composition_fold_random_coeff_var
-    // - before_oods_channel_var
-    // - line_batch_random_coeff_var
-    // - fri_fold_random_coeff_var
-    // - trace_oods_values_vars
-    // - interaction_oods_values_vars
-    // - constant_oods_values_vars
-    // - composition_oods_raw_values_vars
 
     Ok(dsl)
 }

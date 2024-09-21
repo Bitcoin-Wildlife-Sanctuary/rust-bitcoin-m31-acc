@@ -55,12 +55,13 @@ pub fn generate_dsl(_: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DS
         fiat_shamir1_result_hash,
         cache.get("fiat_shamir1_result").unwrap(),
     )?;
-    assert_eq!(res.len(), 31);
+    assert_eq!(res.len(), 32);
 
     let mut res = res.into_iter();
 
     let z_var = res.next().unwrap();
     let alpha_var = res.next().unwrap();
+    let _ = res.next().unwrap();
     let _ = res.next().unwrap();
     let _ = res.next().unwrap();
     let _ = res.next().unwrap();

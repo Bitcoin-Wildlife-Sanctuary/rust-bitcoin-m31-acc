@@ -7,6 +7,7 @@ use stwo_prover::examples::plonk::prove_fibonacci_plonk;
 pub const LOG_N_ROWS: u32 = 5;
 
 mod fiat_shamir;
+mod fold;
 mod prepare;
 mod quotients;
 
