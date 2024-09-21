@@ -56,6 +56,18 @@ pub struct FiatShamirOutput {
 
     /// random coefficient
     pub line_batch_random_coeff: QM31,
+
+    /// alpha
+    pub circle_poly_alpha: QM31,
+
+    /// FRI commitments
+    pub fri_layer_commitments: Vec<Sha256Hash>,
+
+    /// FRI folding alphas
+    pub fri_layer_alphas: Vec<QM31>,
+
+    /// Last layer
+    pub last_layer: QM31,
 }
 
 pub struct FiatShamirHints {
@@ -386,6 +398,10 @@ pub fn compute_fiat_shamir_hints(
         queried_values_left,
         queried_values_right,
         line_batch_random_coeff,
+        circle_poly_alpha: fri_fold_random_coeff,
+        fri_layer_commitments: fri_layer_commitments.clone(),
+        fri_layer_alphas: fri_layer_alphas.clone(),
+        last_layer: last_layer_poly.to_vec()[0],
     };
 
     let claimed_sum_divided =

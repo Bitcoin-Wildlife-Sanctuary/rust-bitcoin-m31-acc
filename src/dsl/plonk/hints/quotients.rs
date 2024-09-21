@@ -1,6 +1,7 @@
 use crate::dsl::plonk::hints::fiat_shamir::FiatShamirOutput;
 use crate::dsl::plonk::hints::prepare::PrepareOutput;
 use bitcoin_circle_stark::precomputed_merkle_tree::PrecomputedMerkleTreeProof;
+use stwo_prover::core::fft::ibutterfly;
 use stwo_prover::core::fields::qm31::QM31;
 use stwo_prover::core::fields::FieldExpOps;
 
@@ -22,9 +23,9 @@ pub(crate) struct QuotientsOutput {
 pub(crate) fn compute_quotients_hints(
     fs_output: &FiatShamirOutput,
     prepare_output: &PrepareOutput,
-) -> Vec<PerQueryQuotientHint> {
+) -> (QuotientsOutput, Vec<PerQueryQuotientHint>) {
     let mut hints = vec![];
-    //let mut fold_results = vec![];
+    let mut fold_results = vec![];
 
     for (i, queries_parent) in fs_output.queries_parents.iter().enumerate() {
         let precomputed = prepare_output
@@ -221,10 +222,25 @@ pub(crate) fn compute_quotients_hints(
             + QM31::from(nominators[2].1[3]))
             * QM31::from(denominator_inverses_expected[i][1][1]);
 
+        let fri_answer = {
+            let p = precomputed.circle_point;
+            let py_inverse = p.y.inverse();
+
+            let f_p = eval_left;
+            let f_neg_p = eval_right;
+
+            let (mut f0_px, mut f1_px) = (f_p, f_neg_p);
+            ibutterfly(&mut f0_px, &mut f1_px, py_inverse);
+
+            vec![f0_px, f1_px]
+        };
+
+        fold_results.push(fs_output.circle_poly_alpha * fri_answer[1] + fri_answer[0]);
+
         hints.push(PerQueryQuotientHint {
             precomputed_merkle_proofs: vec![precomputed.clone()],
         });
     }
 
-    hints
+    (QuotientsOutput { fold_results }, hints)
 }

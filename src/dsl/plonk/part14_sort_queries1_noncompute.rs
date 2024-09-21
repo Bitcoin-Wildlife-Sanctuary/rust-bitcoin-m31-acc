@@ -67,11 +67,11 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
 
     assert!(res.next().is_none());
 
-    /*let mut folding_intermediate_results_vars = vec![];
+    let mut folding_intermediate_results_vars = vec![];
     for (&query, fold_hints) in queries
         .iter()
         .zip(hints.per_query_fold_hints.iter())
-        .take(3)
+        .take(7)
     {
         let queries = dsl.execute("decompose_positions_to_5", &[query])?;
         let mut tmp = vec![];
@@ -124,7 +124,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
             tmp.push((left, right));
         }
         folding_intermediate_results_vars.push(tmp);
-    }*/
+    }
 
     Ok(dsl)
 }
