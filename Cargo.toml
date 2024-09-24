@@ -2,6 +2,7 @@
 name = "rust-bitcoin-m31-acc"
 version = "0.1.0"
 edition = "2021"
+default-run = "demo_plonk"
 
 [dependencies]
 rand = "0.8.5"
@@ -31,3 +32,13 @@ opt-level = 3
 
 [profile.release]
 lto = true
+
+[[bin]]
+name = "demo_fibonacci"
+test = false
+bench = false
+
+[[bin]]
+name = "demo_plonk"
+test = false
+bench = false

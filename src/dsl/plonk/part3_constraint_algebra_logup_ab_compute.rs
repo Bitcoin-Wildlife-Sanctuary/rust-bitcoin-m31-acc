@@ -1,3 +1,4 @@
+use crate::dsl::modules::fiat_shamir::eval_from_partial_evals;
 use crate::dsl::plonk::hints::Hints;
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
@@ -46,8 +47,8 @@ pub fn generate_dsl(_: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DS
 
     let mut res = res.into_iter();
 
-    let _ = res.next().unwrap();
-    let _ = res.next().unwrap();
+    let z_var = res.next().unwrap();
+    let alpha_var = res.next().unwrap();
     let composition_fold_random_coeff_var = res.next().unwrap();
     let _ = res.next().unwrap();
     let _ = res.next().unwrap();
@@ -141,18 +142,77 @@ pub fn generate_dsl(_: &Hints, cache: &mut HashMap<String, Zipper>) -> Result<DS
     )?[0];
 
     // c_val - op * (a_val + b_val) - (E::F::one() - op) * a_val * b_val
-    let list_constraint_algebra_result = vec![sum_multiplied_by_randomizer];
-    let (pack_constraint_algebra_result_hash, pack_constraint_algebra_result) =
-        zip_elements(&mut dsl, &list_constraint_algebra_result)?;
+
+    // denominator_1 = a_wire + alpha * a_val - z
+    // denominator_2 = b_wire + alpha * b_val - z
+    // num_aggregated = denominator_1 + denominator_2
+    // denominator_aggregated = denominator_1 * denominator_2
+
+    // Step 1: push the table
+    let alpha_limbs_var = dsl.execute("qm31_to_limbs", &[alpha_var])?[0];
+    let a_val_var = trace_oods_values_vars[1];
+    let a_limbs_var = dsl.execute("qm31_to_limbs", &[a_val_var])?[0];
+
+    let alpha_times_a_val_var =
+        dsl.execute("qm31_limbs_mul", &[table, alpha_limbs_var, a_limbs_var])?[0];
+
+    let a_wire_var = constant_oods_values_vars[0];
+    let mut denominator_1_var = dsl.execute("qm31_add", &[a_wire_var, alpha_times_a_val_var])?[0];
+    denominator_1_var = dsl.execute("qm31_sub", &[denominator_1_var, z_var])?[0];
+
+    let b_val_var = trace_oods_values_vars[2];
+    let b_limbs_var = dsl.execute("qm31_to_limbs", &[b_val_var])?[0];
+
+    let alpha_times_b_val_var =
+        dsl.execute("qm31_limbs_mul", &[table, alpha_limbs_var, b_limbs_var])?[0];
+
+    let b_wire_var = constant_oods_values_vars[1];
+    let mut denominator_2_var = dsl.execute("qm31_add", &[b_wire_var, alpha_times_b_val_var])?[0];
+    denominator_2_var = dsl.execute("qm31_sub", &[denominator_2_var, z_var])?[0];
+
+    let num_aggregated_var = dsl.execute("qm31_add", &[denominator_1_var, denominator_2_var])?[0];
+    let denominator_1_limbs_var = dsl.execute("qm31_to_limbs", &[denominator_1_var])?[0];
+    let denominator_2_limbs_var = dsl.execute("qm31_to_limbs", &[denominator_2_var])?[0];
+
+    let denom_aggregated_var = dsl.execute(
+        "qm31_limbs_mul",
+        &[table, denominator_1_limbs_var, denominator_2_limbs_var],
+    )?[0];
+
+    // a_b_logup_var * denom - num
+
+    let a_b_logup_var = eval_from_partial_evals(
+        &mut dsl,
+        interaction_oods_values_vars[0],
+        interaction_oods_values_vars[1],
+        interaction_oods_values_vars[2],
+        interaction_oods_values_vars[3],
+    )?;
+    let a_b_logup_limbs_var = dsl.execute("qm31_to_limbs", &[a_b_logup_var])?[0];
+    let denom_aggregated_limbs_var = dsl.execute("qm31_to_limbs", &[denom_aggregated_var])?[0];
+    let a_b_logup_times_denom_var = dsl.execute(
+        "qm31_limbs_mul",
+        &[table, denom_aggregated_limbs_var, a_b_logup_limbs_var],
+    )?[0];
+
+    let constraint_logup_ab_without_randomizer_var =
+        dsl.execute("qm31_sub", &[a_b_logup_times_denom_var, num_aggregated_var])?[0];
+
+    let list_constraint_logup_ab_result = vec![
+        sum_multiplied_by_randomizer,
+        constraint_logup_ab_without_randomizer_var,
+    ];
+    let (pack_constraint_logup_ab_result_hash, pack_constraint_logup_ab_result) =
+        zip_elements(&mut dsl, &list_constraint_logup_ab_result)?;
 
     cache.insert(
-        "constraint_algebra_result".to_string(),
-        pack_constraint_algebra_result,
+        "constraint_logup_ab_result".to_string(),
+        pack_constraint_logup_ab_result,
     );
 
     dsl.set_program_output("hash", fiat_shamir1_result_hash)?;
     dsl.set_program_output("hash", fiat_shamir2_result_hash)?;
-    dsl.set_program_output("hash", pack_constraint_algebra_result_hash)?;
+    dsl.set_program_output("hash", pack_constraint_logup_ab_result_hash)?;
 
     Ok(dsl)
 }

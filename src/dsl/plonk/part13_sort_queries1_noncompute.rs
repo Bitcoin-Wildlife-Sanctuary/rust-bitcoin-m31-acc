@@ -1,5 +1,5 @@
 use crate::dsl::plonk::hints::{Hints, LOG_N_ROWS};
-use crate::dsl::tools::{unzip_elements, Zipper};
+use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
 use bitcoin_script_dsl::dsl::{Element, DSL};
@@ -28,15 +28,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
 
     let sort_queries1_hash = dsl.alloc_input(
         "hash",
-        Element::Str(
-            cache
-                .get("sort_queries1")
-                .unwrap()
-                .hash
-                .as_ref()
-                .to_vec()
-                .to_vec(),
-        ),
+        Element::Str(cache.get("sort_queries1").unwrap().hash.as_ref().to_vec()),
     )?;
 
     // unpack `sort_queries1_hash`
@@ -59,19 +51,19 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
         fri_tree_commitments_vars.push(res.next().unwrap());
     }
 
-    let trace_queried_results_hash = res.next().unwrap();
-    let interaction_queried_results_hash = res.next().unwrap();
-    let constant_queried_results_hash = res.next().unwrap();
-    let composition_queried_results_hash = res.next().unwrap();
-    let twiddles_hash = res.next().unwrap();
+    let _ = res.next().unwrap();
+    let _ = res.next().unwrap();
+    let _ = res.next().unwrap();
+    let _ = res.next().unwrap();
+    let _ = res.next().unwrap();
 
     assert!(res.next().is_none());
 
-    let mut folding_intermediate_results_vars = vec![];
-    for (&query, fold_hints) in queries
+    let mut folding_intermediate_hashes = vec![];
+    for (i, (&query, fold_hints)) in queries
         .iter()
         .zip(hints.per_query_fold_hints.iter())
-        .take(7)
+        .enumerate()
     {
         let queries = dsl.execute("decompose_positions_to_5", &[query])?;
         let mut tmp = vec![];
@@ -123,7 +115,28 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
 
             tmp.push((left, right));
         }
-        folding_intermediate_results_vars.push(tmp);
+
+        let mut list = vec![];
+        for entry in tmp.iter() {
+            list.push(entry.0);
+            list.push(entry.1);
+        }
+
+        let (pack_per_query_folding_intermediate_hash, pack_per_query_folding_intermediate) =
+            zip_elements(&mut dsl, &list)?;
+
+        cache.insert(
+            format!("folding_intermediate_{}", i + 1),
+            pack_per_query_folding_intermediate,
+        );
+
+        folding_intermediate_hashes.push(pack_per_query_folding_intermediate_hash);
+    }
+
+    dsl.set_program_output("hash", shared_information_hash)?;
+    dsl.set_program_output("hash", sort_queries1_hash)?;
+    for h in folding_intermediate_hashes.iter() {
+        dsl.set_program_output("hash", *h)?;
     }
 
     Ok(dsl)

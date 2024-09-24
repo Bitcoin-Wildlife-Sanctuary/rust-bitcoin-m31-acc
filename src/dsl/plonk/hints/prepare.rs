@@ -6,7 +6,6 @@ use std::iter::zip;
 use stwo_prover::core::backend::cpu::quotients::denominator_inverses;
 use stwo_prover::core::constraints::complex_conjugate_line_coeffs_normalized;
 use stwo_prover::core::fields::cm31::CM31;
-use stwo_prover::core::fields::FieldExpOps;
 use stwo_prover::core::pcs::quotients::{ColumnSampleBatch, PointSample};
 use stwo_prover::core::poly::circle::CanonicCoset;
 use stwo_prover::core::prover::{StarkProof, VerificationError, N_QUERIES};

@@ -1,7 +1,5 @@
 use crate::dsl::building_blocks::point::get_random_point_full;
-use crate::dsl::modules::fiat_shamir::{
-    coset_vanishing, step_constraint_denominator_inverse_evaluation,
-};
+use crate::dsl::modules::fiat_shamir::coset_vanishing;
 use crate::dsl::plonk::hints::{Hints, LOG_N_ROWS};
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};

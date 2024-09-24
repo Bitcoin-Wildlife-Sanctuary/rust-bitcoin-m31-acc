@@ -1,6 +1,4 @@
 use crate::dsl::building_blocks::point::add_constant_m31_point;
-use crate::dsl::building_blocks::qm31::reformat_qm31_from_dsl_element;
-use crate::dsl::fibonacci::hints::FIB_LOG_SIZE;
 use crate::dsl::modules::prepare::prepare_pair_vanishing;
 use crate::dsl::plonk::hints::{Hints, LOG_N_ROWS};
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};

@@ -64,7 +64,7 @@ fn main() {
         let rest_display = (rest as f64) / 1000.0 / 1000.0 / 100.0;
 
         println!("================= INSTRUCTIONS =================");
-        println!("To start with, prepare {} BTC into a UTXO transaction which would be used to fund the transaction fee for the entire demo.",
+        println!("To start with, prepare {} BTC into a UTXO transaction which would be used to fund the transaction fee for the entire demo-fibonacci.",
                  amount_display
         );
         println!(
@@ -96,7 +96,7 @@ fn main() {
         println!();
         println!("Call this tool again with the funding txid and initial program id");
         println!(
-            "> cargo run -- -f {} -i {}",
+            "> cargo run --bin demo_fibonacci -- -f {} -i {}",
             "[funding txid]".on_bright_green().black(),
             "[initial program txid]".on_bright_green().black()
         );
@@ -182,7 +182,9 @@ fn main() {
             tx.consensus_encode(&mut bytes).unwrap();
 
             // this directory is to Fractal mainnet
-            let mut fs = std::fs::File::create(format!("./demo-fractal/tx-{}.txt", i + 1)).unwrap();
+            let mut fs =
+                std::fs::File::create(format!("./demo-fibonacci-fractal/tx-{}.txt", i + 1))
+                    .unwrap();
             fs.write_all(hex::encode(bytes).as_bytes()).unwrap();
         }
 

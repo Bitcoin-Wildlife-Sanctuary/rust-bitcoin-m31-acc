@@ -137,21 +137,18 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     }
 
     let mut list_constant_queried_results = vec![];
-    for constant_a_wire_queried_result in constant_a_wire_queried_results.iter() {
-        list_constant_queried_results.push(constant_a_wire_queried_result.0);
-        list_constant_queried_results.push(constant_a_wire_queried_result.1);
-    }
-    for constant_b_wire_queried_result in constant_b_wire_queried_results.iter() {
-        list_constant_queried_results.push(constant_b_wire_queried_result.0);
-        list_constant_queried_results.push(constant_b_wire_queried_result.1);
-    }
-    for constant_c_wire_queried_result in constant_c_wire_queried_results.iter() {
-        list_constant_queried_results.push(constant_c_wire_queried_result.0);
-        list_constant_queried_results.push(constant_c_wire_queried_result.1);
-    }
-    for constant_op_queried_result in constant_op_queried_results.iter() {
-        list_constant_queried_results.push(constant_op_queried_result.0);
-        list_constant_queried_results.push(constant_op_queried_result.1);
+    for i in 0..8 {
+        list_constant_queried_results.push(constant_a_wire_queried_results[i].0);
+        list_constant_queried_results.push(constant_a_wire_queried_results[i].1);
+
+        list_constant_queried_results.push(constant_b_wire_queried_results[i].0);
+        list_constant_queried_results.push(constant_b_wire_queried_results[i].1);
+
+        list_constant_queried_results.push(constant_c_wire_queried_results[i].0);
+        list_constant_queried_results.push(constant_c_wire_queried_results[i].1);
+
+        list_constant_queried_results.push(constant_op_queried_results[i].0);
+        list_constant_queried_results.push(constant_op_queried_results[i].1);
     }
 
     let (pack_constant_queried_results_hash, pack_constant_queried_results) =
@@ -163,9 +160,9 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     );
 
     let mut list_composition_queried_results = vec![];
-    for composition_queried_result in composition_queried_results {
-        list_composition_queried_results.push(composition_queried_result.0);
-        list_composition_queried_results.push(composition_queried_result.1);
+    for i in 0..8 {
+        list_composition_queried_results.push(composition_queried_results[i].0);
+        list_composition_queried_results.push(composition_queried_results[i].1);
     }
 
     let (pack_composition_queried_results_hash, pack_composition_queried_results) =

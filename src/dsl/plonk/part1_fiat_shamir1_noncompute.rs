@@ -1,7 +1,5 @@
 use crate::dsl::building_blocks::point::get_random_point_skipped;
-use crate::dsl::building_blocks::qm31::{
-    reformat_qm31_from_dsl_element, reformat_qm31_to_dsl_element,
-};
+use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
 use crate::dsl::fibonacci::hints::FIB_LOG_SIZE;
 use crate::dsl::plonk::hints::Hints;
 use crate::dsl::tools::{zip_elements, Zipper};
@@ -265,21 +263,18 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     // Organize the queried results into different packs
 
     let mut list_trace_queried_results = vec![];
-    for trace_mult_queried_result in trace_mult_queried_results.iter() {
-        list_trace_queried_results.push(trace_mult_queried_result.0);
-        list_trace_queried_results.push(trace_mult_queried_result.1);
-    }
-    for trace_a_val_queried_result in trace_a_val_queried_results.iter() {
-        list_trace_queried_results.push(trace_a_val_queried_result.0);
-        list_trace_queried_results.push(trace_a_val_queried_result.1);
-    }
-    for trace_b_val_queried_result in trace_b_val_queried_results.iter() {
-        list_trace_queried_results.push(trace_b_val_queried_result.0);
-        list_trace_queried_results.push(trace_b_val_queried_result.1);
-    }
-    for trace_c_val_queried_result in trace_c_val_queried_results.iter() {
-        list_trace_queried_results.push(trace_c_val_queried_result.0);
-        list_trace_queried_results.push(trace_c_val_queried_result.1);
+    for i in 0..8 {
+        list_trace_queried_results.push(trace_mult_queried_results[i].0);
+        list_trace_queried_results.push(trace_mult_queried_results[i].1);
+
+        list_trace_queried_results.push(trace_a_val_queried_results[i].0);
+        list_trace_queried_results.push(trace_a_val_queried_results[i].1);
+
+        list_trace_queried_results.push(trace_b_val_queried_results[i].0);
+        list_trace_queried_results.push(trace_b_val_queried_results[i].1);
+
+        list_trace_queried_results.push(trace_c_val_queried_results[i].0);
+        list_trace_queried_results.push(trace_c_val_queried_results[i].1);
     }
 
     let (pack_trace_queried_results_hash, pack_trace_queried_results) =
@@ -291,13 +286,12 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     );
 
     let mut list_interaction_queried_results = vec![];
-    for interaction_ab_queried_result in interaction_ab_queried_results.iter() {
-        list_interaction_queried_results.push(interaction_ab_queried_result.0);
-        list_interaction_queried_results.push(interaction_ab_queried_result.1);
-    }
-    for interaction_cum_queried_result in interaction_cum_queried_results.iter() {
-        list_interaction_queried_results.push(interaction_cum_queried_result.0);
-        list_interaction_queried_results.push(interaction_cum_queried_result.1);
+    for i in 0..8 {
+        list_interaction_queried_results.push(interaction_ab_queried_results[i].0);
+        list_interaction_queried_results.push(interaction_ab_queried_results[i].1);
+
+        list_interaction_queried_results.push(interaction_cum_queried_results[i].0);
+        list_interaction_queried_results.push(interaction_cum_queried_results[i].1);
     }
 
     let (pack_interaction_queried_results_hash, pack_interaction_queried_results) =

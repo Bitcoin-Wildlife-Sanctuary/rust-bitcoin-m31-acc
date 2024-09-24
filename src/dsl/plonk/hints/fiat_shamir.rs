@@ -17,8 +17,7 @@ use stwo_prover::core::fri::{
 use stwo_prover::core::pcs::{CommitmentSchemeVerifier, PcsConfig, TreeVec};
 use stwo_prover::core::poly::line::LineDomain;
 use stwo_prover::core::prover::{
-    sampled_values_to_mask, StarkProof, VerificationError, LOG_BLOWUP_FACTOR,
-    LOG_LAST_LAYER_DEGREE_BOUND, N_QUERIES,
+    StarkProof, VerificationError, LOG_BLOWUP_FACTOR, LOG_LAST_LAYER_DEGREE_BOUND, N_QUERIES,
 };
 use stwo_prover::core::queries::{Queries, SparseSubCircleDomain};
 use stwo_prover::core::vcs::sha256_hash::{Sha256Hash, Sha256Hasher};
@@ -140,7 +139,7 @@ pub fn compute_fiat_shamir_hints(
     // step 2: absorb interaction commitment and constant commitment, squeeze random coefficient for composition folding
     commitment_scheme.commit(proof.commitments[1], &sizes[1], channel);
     commitment_scheme.commit(proof.commitments[2], &sizes[2], channel);
-    let composition_fold_random_coeff = channel.draw_felt();
+    let _ = channel.draw_felt();
 
     // step 3: absorb composition commitment, squeeze oods point
     commitment_scheme.commit(
@@ -151,14 +150,6 @@ pub fn compute_fiat_shamir_hints(
     let oods_point = CirclePoint::<SecureField>::get_random_point(channel);
 
     // step 4: pull trace oods values and composition oods values from proof
-    let (non_composition_oods_value, composition_oods_value) =
-        sampled_values_to_mask(&components, &proof.commitment_scheme_proof.sampled_values)
-            .map_err(|_| {
-                VerificationError::InvalidStructure(
-                    "Unexpected sampled_values structure".to_string(),
-                )
-            })?;
-
     let sample_values = &proof.commitment_scheme_proof.sampled_values.0;
 
     // step 5: draw fri folding coefficient with all oods values
