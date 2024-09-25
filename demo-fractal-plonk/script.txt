@@ -20,7 +20,7 @@ bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(ca
 
 // tx-3.txt seems to be too big for the docker container (this is a complicated story related to max argument length in Linux)
 // we use the unisat API instead
-curl -X POST -H "Content-Type: application/json" -d @demo-fractal-plonk/api.txt https://wallet-api-fractal.unisat.io/v5/tx/broadcast
+curl -X POST -H "Content-Type: application/json" -d @demo-fractal-plonk/curl-upload-tx3.txt https://wallet-api-fractal.unisat.io/v5/tx/broadcast
 {"code":0,"msg":"ok","data":"cd083c75661b6fa0ef2ac8685e82e22a34751bf8a8e7ade3e2054458c6c0dd30"}
 
 bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-4.txt)
