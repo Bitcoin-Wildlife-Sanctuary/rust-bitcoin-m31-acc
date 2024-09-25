@@ -1,0 +1,175 @@
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data sendtoaddress "bc1qlcdtg2knuprq2j308exlw5dw0kh6dlzc8nn2ls" 13.5445
+f8da886af30d1766145aeb00c5ea91f5b816f332eb8411539b132df5464f1a25
+
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data createrawtransaction "[{\"txid\":\"f8da886af30d1766145aeb00c5ea91f5b816f332eb8411539b132df5464f1a25\", \"vout\": 0}]" "[{\"bc1pn7zprl7ufprqht03k7erk2vtp78rqdj9vw4xs95qcee7v7ge0uksap8n0g\":13.53849669}, {\"bc1qvu62dh2l4d9j09e880musdew6g5ex8n6apx72cx5zafv2mjx6r5qyzpdvx\":0.0000033}]"
+0200000001251a4f46f52d139b531184eb32f316b8f591eac500eb5a1466170df36a88daf80000000000fdffffff02451bb250000000002251209f8411ffdc48460badf1b7b23b298b0f8e30364563aa681680c673e679197f2d4a010000000000002200206734a6dd5fab4b2797273bf7c8372ed229931e7ae84de560d41752c56e46d0e800000000
+
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data signrawtransactionwithwallet 0200000001251a4f46f52d139b531184eb32f316b8f591eac500eb5a1466170df36a88daf80000000000fdffffff02451bb250000000002251209f8411ffdc48460badf1b7b23b298b0f8e30364563aa681680c673e679197f2d4a010000000000002200206734a6dd5fab4b2797273bf7c8372ed229931e7ae84de560d41752c56e46d0e800000000
+{
+  "hex": "02000000000101251a4f46f52d139b531184eb32f316b8f591eac500eb5a1466170df36a88daf80000000000fdffffff02451bb250000000002251209f8411ffdc48460badf1b7b23b298b0f8e30364563aa681680c673e679197f2d4a010000000000002200206734a6dd5fab4b2797273bf7c8372ed229931e7ae84de560d41752c56e46d0e8024730440220737f54b39c86bf9259cd9ddc0644617c55d537bf62d301747ad6c310decc963a022057e5eec48cefb10b2397a409f92b183d7f87ea39a90a85162010456ba02c18ab01210293697f8723138fa13d78f6bb05d618b4d1685d14bd1b2209ce02f2dbfc24bbf500000000",
+  "complete": true
+}
+
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data sendrawtransaction 02000000000101251a4f46f52d139b531184eb32f316b8f591eac500eb5a1466170df36a88daf80000000000fdffffff02451bb250000000002251209f8411ffdc48460badf1b7b23b298b0f8e30364563aa681680c673e679197f2d4a010000000000002200206734a6dd5fab4b2797273bf7c8372ed229931e7ae84de560d41752c56e46d0e8024730440220737f54b39c86bf9259cd9ddc0644617c55d537bf62d301747ad6c310decc963a022057e5eec48cefb10b2397a409f92b183d7f87ea39a90a85162010456ba02c18ab01210293697f8723138fa13d78f6bb05d618b4d1685d14bd1b2209ce02f2dbfc24bbf500000000
+307bd0b75b3e755941113104080e239104cb0e91cb955e26e03693994433b6c5
+
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/demo-fractal-plonk/tx-1.txt)
+476847060043b7d618ba9183ce34907ee2c61ffe962705ff013fc4c515ec41f3
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/demo-fractal-plonk/tx-2.txt)
+4fd6cec6a58e069c3678326df0b3f66b66e79927ac193d5a73c59b6ac94fc8b3
+
+// tx-3.txt seems to be too big for the docker container (this is a complicated story related to max argument length in Linux)
+// we use the unisat API instead
+curl -X POST -H "Content-Type: application/json" -d @demo-fractal-plonk/api.txt https://wallet-api-fractal.unisat.io/v5/tx/broadcast
+{"code":0,"msg":"ok","data":"cd083c75661b6fa0ef2ac8685e82e22a34751bf8a8e7ade3e2054458c6c0dd30"}
+
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-4.txt)
+2f2455c152a0d6cd4a360e3aa5ff8667529deadf1b9c3075d4160ea867db280a
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-5.txt)
+a97145048d666119f3b3a3c9204f819f20f08dfa715fafa176ffe69473eb068e
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-6.txt)
+dc490ecbb0d67941fa46391e30ac35280b2b181e1ee1dcefa8f92bfc643a1b7c
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-7.txt)
+421bac549b0e96ab5888c5673bb501a8698b8067a9972d39b60f9a92501aa061
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-8.txt)
+f394da9d076982494fde0f2025acf561ba842e55914d4ca2eca881595d1b86ed
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-9.txt)
+c69c43524fac946005fa93fef1e9a934fe4a7aad445428c98d2f4345d7e1a048
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-10.txt)
+04fc9d50e6ec16ae12567122da9ea26b4f2595caa29dd6ca23661003c54fc4e7
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-11.txt)
+466f8d4724f5f7e9f9b94e20a4087f8cad6ce3ee6a35fc70f4e69f1d2b0bcbe7
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-12.txt)
+74cc8654acacdb09589fc0e24582baf0f31727d9db6853375b30e9101ac45b05
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-13.txt)
+60bb97be740590bb0aa5ccfd32dd14b972d4fdc4d141b6ee9f85dfe9c5dab338
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-14.txt)
+e5ce75a01268bd8de408b3ff4b6b5babebbbec61a9a939a5a9c0a694b8fa7465
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-15.txt)
+c169f7cce50bbebc5efb36b241ad986e8030ba978bdb1b95c92787f1cbdd4226
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-16.txt)
+2bd7d6ef546cbda40973d466b6b2e973dc24226023c92357830846ebc7f110df
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-17.txt)
+b18d35a200082f26a765c0dbdd3890983f0cafb13dff0d47da732d03476a05b1
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-18.txt)
+bd4ccd7cf3193ce3596a03f0255a82c3f9f6dcfed9aa3be302690f7723b8df3a
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-19.txt)
+5c90713defede6e6c938daa8aae09865187db0a8051a9fb3f73fb23ddeadbe5e
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-20.txt)
+344a1e572d1056441e3bd12d4f7d75c3b67862222267b1e284a106ee681e647b
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-21.txt)
+e7430d2fc716cb242ea574a2ba517007049d21e7c1d8f392464daf81cbfc4165
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-22.txt)
+9387dd887aa16f1daeda37371703c15a97dc27d8d550c04a46c494c918b13667
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-23.txt)
+27f15344fc68ff5abe3352d60f4cddf84dae8850310115a8fb7e8704c36ea0e0
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-24.txt)
+d774b76a1ad2185b94f273107f3e67da86dacf9e238ba8344c8741e26d35935c
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-25.txt)
+b79434478b9c1d6897e072a0467425fd46170c2a3b1d139f49a666a077bc7971
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-26.txt)
+f9a26460079f8d47f4feb29ee95db7d93898a5879d7e49860d8936fb9b05b617
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-27.txt)
+dae9af08bb06dbb27607a91a7d626c14746a5b84da7d7378b7a73f69f9d2073d
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-28.txt)
+c6d68d4c74ea438b0adf59b8e4b0dff3682d949aca7aa03514ef483a5dd231ab
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-29.txt)
+0667d51cba527be3faac85bcb5e3e0a6eec9098332dce99a21ad49ef7409a053
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-30.txt)
+7f1feb9b7c1ecbbda040794eac65b6068b5b7132a3b672846ea9cd747990e06b
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-31.txt)
+4d8902ad8e35c53630fbd9835c09a3e63c8d05fde0a35a08bfb84cd9942e1619
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-32.txt)
+2f5210999772886705c9920a0a21ad4e931a7613d53099bac7050b82c262ffd4
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-33.txt)
+6fdd3920a9ca739c9f4806550db82496b79a112004cbb603cac224ab49c28fa0
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-34.txt)
+9114563b1e2a292d6a9db92a7acd71d043d983c1444f4632f3de7fca6a51b955
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-35.txt)
+6750935aaa70461b817a8b20a0e35e51e892ddf8bc1c7b80b9c2fe609cb6b1c1
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-36.txt)
+adfa03e54f3b1ee3a051eb413a99e9ce958ae8efd24b89f0c23aa3b61aa1c572
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-37.txt)
+272fbf694ce2d54bdd15871130e227692613b4a24d8d81572c42d6659c1393f5
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-38.txt)
+2468815fdb9655843717810c4cf349638c1de629f173c5349e1b6ed85d545a6a
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-39.txt)
+d3a411f2cbf74d4618832b1e5d54eb426f760cd3fba03c8e0812bed538fcd170
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-40.txt)
+62d2ce5ecbcc13069d86453cb3791a0fbbed0f0c98362aab44b9acb418db9de3
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-41.txt)
+55a4a63d0fdad3b4f7ad30ba8144d19f933a1434ba6a842295f957c9ba0662cf
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-42.txt)
+442ac96cd2c1f3042e57ce92b0f73aee45d8358e914073ea72a8c55561ebce51
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-43.txt)
+9bd30d560b82eec1cb2203bf1133a90f08db12beaaf4c5060bdc603460e0a7f0
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-44.txt)
+6230c0313f8ce6931cff8d741cd32525dce1b3ca72d10f6e2a20d808361ed918
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-45.txt)
+d590f98bc2c16a12ac586b63b9deb8363ce05b7f62da9666746e6f7c59deeced
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-46.txt)
+0f07b53102a5b236e0044434bfdde0c74aff77696a862a7770e084ff2c6f1c04
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-47.txt)
+7b294745edca927a5ae5f4af53ea24fcf1ea651a5fd6045bae710dddc063d218
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-48.txt)
+a6af4c5a6819682044159bb7c3d6dbb1ab7bf6f05d7febd98ceeb3fef5b82716
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-49.txt)
+1cdeb5be294ef4c0edc5b145777a9d2d751a15df276caaaa92da920301780c36
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-50.txt)
+222a69223137c0a6fad93722bb32d69e5858491fa4464cd64113f38be0409121
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-51.txt)
+3e371ea42ac7a5601c8fac08c0e55d081b28a906dbb1ff4ddccb5d33999b242d
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-52.txt)
+c5e8b232714a85c7e302db1a8281be3f247cb579078e9cd8515888664811cc01
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-53.txt)
+ac5239b21d26debaf524a9c90904a43836b698d84ac4b64490d8910566ac6472
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-54.txt)
+73fa7bc11c628426443071e99b92da7984df5764518a17c1d22b1105b9e8e25d
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-55.txt)
+f5cb892ae17603d00ad0e6643ed89dbd390f88231300a70fab2fd72e6af2c498
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-56.txt)
+d327fd24caa78506ddcd403c583649572cd7b60309eec3d0068626a8a17d6e56
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-57.txt)
+f7d5556cb76332d2c25ff79772fb678a3160607de0aa96c83068d141db755a73
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-58.txt)
+887fa6b1bc048ec6624d3f1d6cf3a9ab8dea26e7df166c06bfcd8d109d49786c
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-59.txt)
+382b7d5a491020673fa39de5c31245ec16bef37a48eb29925794fc9606517dc7
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-60.txt)
+6fa90d678389772b8182059d3b3333874fdd2a916b7d5cf717234881b875df5c
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-61.txt)
+426973ecd72d16ed8133805b6bd3c2504d75adbfc6c546ab80eee41b33572ae8
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-62.txt)
+4e8820698fb5653c7c8d27e757f95950f54f10061c7cd05f39339597df9d8cdf
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-63.txt)
+4f73901bbe6e155d46790ef3905ba04808fa63d928f9f284a496a74b34cfd653
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-64.txt)
+1789d063dfd5ba8f40bc50710cd6a707a485a5cfd8c8d726c104df31f899533b
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-65.txt)
+206be073237a2e825774b6b573a5485b2e7a9dcd05b2dee485368f06fbd4a94e
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-66.txt)
+f4b8e4718c99c69a1b67aef443bef36d5007bc043d67fb5b3d11cf5f047d48a3
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-67.txt)
+d20eef56536e86f9868482370ad3dfa7ef79c29484e0134b4c4dd8f70a3c2148
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-68.txt)
+65558ca44a7c6eb6a3aa4958c0435a900005a1ea9e2357f33aa5a28b56207c82
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-69.txt)
+efd956a33d0500b47b466a1ad3951254d16ac64b0ee528b02aec0ba058af48c7
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-70.txt)
+1f5e195da4dd576921b1d9dfc01235989c23c7ffadad83403b3a72e84cbb4c47
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-71.txt)
+aa0a221c013b54447028e7375fff83360d90d660cab46b61ea6c301f25fb2d7b
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-72.txt)
+e400d885a7e9038f90cf0a9ddc62b860ab83e8b92f322498f22e2a484ae0bf47
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-73.txt)
+a8c8db1855af3e5e171e21bb7bb8cadffdb25edb5c0da1363966f51ac4f73832
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-74.txt)
+7787455af06f28645d412e576074a609c82e825d7689208f0ad9e5c8501bc651
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-75.txt)
+dc43a95b19a1146bf6f2c7925bd650419fc9ede3d48b4be470d633aeb839a966
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-76.txt)
+5eeebbae09b63fbd40b93cb167489d2a28cb560859229814ca097b85cda3ab6b
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-77.txt)
+b4adf3dda011832f435a4ff786f7e842f90115e73d2a0605bda67d02aecca7dd
+bitcoin@b58ef6bed0c5:/data$ bitcoin-cli --datadir=/data/ sendrawtransaction $(cat /data/tx-78.txt)
+b4918f385ac5386e106add0e83da7ab85604c7a7510463018b8ac6056090088c

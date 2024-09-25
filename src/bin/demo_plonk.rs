@@ -35,8 +35,8 @@ fn main() {
         fees.extend_from_slice(&[95865, 88641, 89467, 90027, 65905, 89159, 89019, 72933]);
     }
 
-    let fee_rate = 1; // 1 for signet, ~3000 for fractal
-    let network = Network::Signet;
+    let fee_rate = 1500; // 1 for signet, ~1500 for fractal
+    let network = Network::Bitcoin;
 
     let amount =
         (fees.iter().sum::<usize>() as u64 + 10000) / 7 * fee_rate + 330 * 74 + 400 * fee_rate;
@@ -184,7 +184,7 @@ fn main() {
 
             // this directory is to Fractal mainnet
             let mut fs =
-                std::fs::File::create(format!("./demo-fibonacci-plonk/tx-{}.txt", i + 1)).unwrap();
+                std::fs::File::create(format!("./demo-fractal-plonk/tx-{}.txt", i + 1)).unwrap();
             fs.write_all(hex::encode(bytes).as_bytes()).unwrap();
         }
 
