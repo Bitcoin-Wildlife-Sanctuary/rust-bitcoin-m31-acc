@@ -1,6 +1,6 @@
 use crate::dsl::building_blocks::qm31::qm31_mul_m31_limbs;
+use crate::dsl::framework::dsl::DSL;
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::DSL;
 
 pub fn ibutterfly(
     dsl: &mut DSL,
@@ -22,13 +22,13 @@ pub fn ibutterfly(
 #[cfg(test)]
 mod test {
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::load_data_types;
     use crate::dsl::load_functions;
     use crate::dsl::modules::fold::ibutterfly;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use rand::{RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::fields::m31::M31;

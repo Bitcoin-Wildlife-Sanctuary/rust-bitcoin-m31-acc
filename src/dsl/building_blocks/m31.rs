@@ -2,10 +2,10 @@ use crate::algorithms::m31::{M31Mult, M31MultGadget};
 use crate::algorithms::utils::{
     check_limb_format, convert_m31_from_limbs, convert_m31_to_limbs, OP_256MUL, OP_HINT,
 };
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{FunctionMetadata, FunctionOutput};
 use anyhow::{Error, Result};
 use bitcoin_circle_stark::treepp::*;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use rust_bitcoin_m31::push_m31_one;
 use stwo_prover::core::fields::m31::M31;
 use stwo_prover::core::fields::FieldExpOps;
@@ -211,11 +211,11 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::algorithms::utils::convert_m31_to_limbs;
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::fields::m31::M31;

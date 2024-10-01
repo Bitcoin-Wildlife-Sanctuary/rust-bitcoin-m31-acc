@@ -1,9 +1,9 @@
 use crate::dsl::fibonacci::hints::{Hints, FIB_LOG_SIZE};
+use crate::dsl::framework::dsl::{Element, DSL};
 use crate::dsl::modules::fiat_shamir::boundary_constraint_evaluation;
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{Element, DSL};
 use std::collections::HashMap;
 use stwo_prover::core::fields::m31::M31;
 

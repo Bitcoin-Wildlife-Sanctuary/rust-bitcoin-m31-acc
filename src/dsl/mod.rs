@@ -1,13 +1,14 @@
 pub mod building_blocks;
 pub mod fibonacci;
+pub mod framework;
 pub mod modules;
 pub mod plonk;
 pub mod tools;
 pub mod utils;
 
+use crate::dsl::framework::dsl::{ElementType, DSL};
+use crate::dsl::framework::functions::FunctionMetadata;
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{ElementType, DSL};
-use bitcoin_script_dsl::functions::FunctionMetadata;
 use building_blocks::table::{push_table, push_table_gadget};
 use building_blocks::{cm31, m31, merkle_tree, pow, qm31, sha256};
 

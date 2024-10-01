@@ -1,9 +1,9 @@
 use crate::dsl::fibonacci::hints::Hints;
+use crate::dsl::framework::dsl::{Element, DSL};
+use crate::dsl::framework::options::Options;
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{Element, DSL};
-use bitcoin_script_dsl::options::Options;
 use itertools::Itertools;
 use std::collections::HashMap;
 

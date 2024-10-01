@@ -1,7 +1,7 @@
 use crate::dsl::building_blocks::cm31::cm31_mul_m31_limbs;
 use crate::dsl::building_blocks::qm31::qm31_mul_cm31_limbs;
+use crate::dsl::framework::dsl::DSL;
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::DSL;
 
 #[derive(Clone)]
 pub struct DenominatorInversesIndices {
@@ -143,6 +143,8 @@ mod test {
     use crate::algorithms::utils::convert_cm31_to_limbs;
     use crate::dsl::building_blocks::cm31::reformat_cm31_to_dsl_element;
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::modules::quotients::{
         aggregation, apply_twin, denominator_inverse_limbs_from_prepared,
         DenominatorInversesIndices, NumeratorsIndices,
@@ -153,8 +155,6 @@ mod test {
     };
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use num_traits::Zero;
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;

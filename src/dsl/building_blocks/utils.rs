@@ -1,12 +1,12 @@
 use crate::algorithms::utils::OP_HINT;
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{
+    FunctionMetadata, FunctionOutput, FunctionWithOptionsMetadata,
+};
+use crate::dsl::framework::options::Options;
 use anyhow::Result;
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_script::script;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{
-    FunctionMetadata, FunctionOutput, FunctionWithOptionsMetadata,
-};
-use bitcoin_script_dsl::options::Options;
 use itertools::Itertools;
 
 fn check_0_or_1() -> Script {
@@ -203,12 +203,12 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::options::Options;
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_script::script;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::options::Options;
-    use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;

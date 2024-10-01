@@ -1,6 +1,6 @@
+use crate::dsl::framework::dsl::{Element, MemoryEntry};
 use bitcoin::script::write_scriptint;
 use bitcoin_circle_stark::channel::{BitcoinIntegerEncodedData, DrawHints};
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry};
 
 pub fn draw_hints_to_memory_entries(hint: DrawHints) -> Vec<MemoryEntry> {
     let mut new_hints = vec![];

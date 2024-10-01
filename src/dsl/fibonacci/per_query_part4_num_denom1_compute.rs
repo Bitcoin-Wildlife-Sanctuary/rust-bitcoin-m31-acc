@@ -1,9 +1,9 @@
 use crate::dsl::fibonacci::hints::Hints;
+use crate::dsl::framework::dsl::{Element, DSL};
 use crate::dsl::modules::quotients::{apply_twin, denominator_inverse_limbs_from_prepared};
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{Element, DSL};
 use std::collections::HashMap;
 
 pub fn generate_dsl(

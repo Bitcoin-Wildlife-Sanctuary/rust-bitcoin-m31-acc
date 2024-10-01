@@ -1,6 +1,8 @@
 use crate::dsl::building_blocks::point::get_random_point_skipped;
 use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
 use crate::dsl::fibonacci::hints::{Hints, FIB_LOG_SIZE};
+use crate::dsl::framework::dsl::{Element, DSL};
+use crate::dsl::framework::options::Options;
 use crate::dsl::load_data_types;
 use crate::dsl::load_functions;
 use crate::dsl::tools::{zip_elements, Zipper};
@@ -8,8 +10,6 @@ use anyhow::Result;
 use bitcoin_circle_stark::precomputed_merkle_tree::{
     get_precomputed_merkle_tree_roots, PRECOMPUTED_MERKLE_TREE_ROOTS,
 };
-use bitcoin_script_dsl::dsl::{Element, DSL};
-use bitcoin_script_dsl::options::Options;
 use itertools::Itertools;
 use std::collections::HashMap;
 use stwo_prover::core::channel::Sha256Channel;

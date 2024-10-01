@@ -48,9 +48,9 @@ pub mod per_query_part8_denom_and_equalverify_compute;
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::framework::test_program;
     use crate::dsl::plonk::hints::Hints;
     use bitcoin_circle_stark::treepp::*;
-    use bitcoin_script_dsl::test_program;
     use std::collections::HashMap;
 
     #[test]

@@ -16,8 +16,8 @@
 //    prepared points
 //    coeff^6, coeff^5, coeff^4, coeff^3, coeff^2, coeff
 
+use crate::dsl::framework::dsl::DSL;
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::DSL;
 
 /// Compute the parameters of `column_line_coeffs` without applying alpha.
 ///
@@ -122,14 +122,14 @@ pub fn power_alpha_six(dsl: &mut DSL, table: usize, alpha: usize) -> Result<Vec<
 #[cfg(test)]
 mod test {
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::modules::prepare::{
         column_line_coeffs, power_alpha_six, prepare_pair_vanishing,
     };
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
     use rand::SeedableRng;
     use rand_chacha::ChaCha20Rng;

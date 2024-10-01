@@ -1,3 +1,5 @@
+use crate::dsl::framework::dsl::{Element, DSL};
+use crate::dsl::framework::options::Options;
 use crate::dsl::plonk::hints::Hints;
 use crate::dsl::tools::{unzip_elements, zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
@@ -5,8 +7,6 @@ use anyhow::Result;
 use bitcoin_circle_stark::precomputed_merkle_tree::{
     get_precomputed_merkle_tree_roots, PRECOMPUTED_MERKLE_TREE_ROOTS,
 };
-use bitcoin_script_dsl::dsl::{Element, DSL};
-use bitcoin_script_dsl::options::Options;
 use itertools::Itertools;
 use std::collections::HashMap;
 

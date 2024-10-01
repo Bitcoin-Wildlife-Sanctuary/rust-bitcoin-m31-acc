@@ -1,3 +1,6 @@
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{FunctionOutput, FunctionWithOptionsMetadata};
+use crate::dsl::framework::options::Options;
 use anyhow::{Error, Result};
 use bitcoin_circle_stark::merkle_tree::{
     MerkleTreePath, MerkleTreePathGadget, MerkleTreeTwinGadget, MerkleTreeTwinProof,
@@ -7,9 +10,6 @@ use bitcoin_circle_stark::precomputed_merkle_tree::{
 };
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_circle_stark::utils::limb_to_be_bits_toaltstack_except_lowest_1bit;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{FunctionOutput, FunctionWithOptionsMetadata};
-use bitcoin_script_dsl::options::Options;
 use itertools::Itertools;
 use stwo_prover::core::circle::CirclePoint;
 use stwo_prover::core::fields::m31::M31;
@@ -339,14 +339,14 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::options::Options;
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::merkle_tree::{MerkleTree, MerkleTreePath, MerkleTreeTwinProof};
     use bitcoin_circle_stark::precomputed_merkle_tree::PrecomputedMerkleTree;
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::options::Options;
-    use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::{ChaCha20Rng, ChaCha8Rng};

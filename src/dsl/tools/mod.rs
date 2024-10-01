@@ -1,11 +1,11 @@
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{
+    FunctionMetadata, FunctionOutput, FunctionWithOptionsMetadata,
+};
+use crate::dsl::framework::options::Options;
 use anyhow::{Error, Result};
 use bitcoin::script::write_scriptint;
 use bitcoin_circle_stark::treepp::*;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{
-    FunctionMetadata, FunctionOutput, FunctionWithOptionsMetadata,
-};
-use bitcoin_script_dsl::options::Options;
 use stwo_prover::core::vcs::sha256_hash::{Sha256Hash, Sha256Hasher};
 
 fn new_zip(_: &mut DSL, _: &[usize], options: &Options) -> Result<FunctionOutput> {
@@ -314,12 +314,12 @@ pub fn hashequalverify_gadget(_: &[usize]) -> Result<Script> {
 mod test {
     use crate::algorithms::utils::convert_qm31_to_limbs;
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::tools::{unzip_elements, zip_elements};
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use rand::{RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::fields::m31::M31;

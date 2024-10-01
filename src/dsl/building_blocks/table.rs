@@ -1,8 +1,8 @@
 use crate::algorithms::table::get_table;
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::FunctionOutput;
 use anyhow::Result;
 use bitcoin_circle_stark::treepp::*;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::FunctionOutput;
 use itertools::Itertools;
 
 pub fn push_table(_: &mut DSL, _: &[usize]) -> Result<FunctionOutput> {

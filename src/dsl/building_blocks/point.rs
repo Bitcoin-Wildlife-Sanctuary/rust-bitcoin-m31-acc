@@ -2,8 +2,8 @@ use crate::algorithms::utils::convert_m31_to_limbs;
 use crate::dsl::building_blocks::qm31::{
     qm31_mul_m31_limbs, reformat_qm31_from_dsl_element, reformat_qm31_to_dsl_element,
 };
+use crate::dsl::framework::dsl::{Element, DSL};
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{Element, DSL};
 use num_traits::One;
 use std::ops::{Add, Mul, Neg};
 use stwo_prover::core::circle::CirclePoint;
@@ -190,10 +190,10 @@ mod test {
         add_constant_m31_point, get_random_point_full, point_add_x_only, point_double_x,
     };
     use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use rand::{Rng, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::channel::Sha256Channel;

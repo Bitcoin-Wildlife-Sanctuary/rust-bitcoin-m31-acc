@@ -1,10 +1,10 @@
 use crate::dsl::building_blocks::qm31::{qm31_mul_cm31_limbs, qm31_mul_m31_limbs};
+use crate::dsl::framework::dsl::{Element, DSL};
 use crate::dsl::modules::quotients::denominator_inverse_limbs_from_prepared;
 use crate::dsl::plonk::hints::Hints;
 use crate::dsl::tools::{unzip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{Element, DSL};
 use std::collections::HashMap;
 
 pub fn generate_dsl(

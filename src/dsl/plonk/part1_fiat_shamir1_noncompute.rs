@@ -1,12 +1,12 @@
 use crate::dsl::building_blocks::point::get_random_point_skipped;
 use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
 use crate::dsl::fibonacci::hints::FIB_LOG_SIZE;
+use crate::dsl::framework::dsl::{Element, DSL};
+use crate::dsl::framework::options::Options;
 use crate::dsl::plonk::hints::Hints;
 use crate::dsl::tools::{zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
-use bitcoin_script_dsl::dsl::{Element, DSL};
-use bitcoin_script_dsl::options::Options;
 use itertools::Itertools;
 use std::collections::HashMap;
 use stwo_prover::core::channel::Sha256Channel;

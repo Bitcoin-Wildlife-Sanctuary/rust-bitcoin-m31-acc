@@ -5,10 +5,10 @@ use crate::algorithms::utils::{
 use crate::dsl::building_blocks::cm31::{
     cm31_mul_m31_limbs, cm31_to_limbs_gadget, reformat_cm31_from_dsl_element,
 };
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{FunctionMetadata, FunctionOutput};
 use anyhow::{Error, Result};
 use bitcoin_circle_stark::treepp::*;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use itertools::Itertools;
 use num_traits::{One, Zero};
 use rust_bitcoin_m31::{
@@ -750,11 +750,11 @@ mod test {
     use crate::dsl::building_blocks::qm31::{
         qm31_mul_cm31_limbs, qm31_mul_m31_limbs, reformat_qm31_to_dsl_element,
     };
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
     use bitcoin_circle_stark::utils::get_rand_qm31;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use itertools::Itertools;
     use num_traits::{One, Zero};
     use rand::{Rng, RngCore, SeedableRng};

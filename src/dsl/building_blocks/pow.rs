@@ -1,10 +1,10 @@
 use crate::algorithms::utils::OP_HINT;
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{FunctionOutput, FunctionWithOptionsMetadata};
+use crate::dsl::framework::options::Options;
 use anyhow::{Error, Result};
 use bitcoin_circle_stark::pow::{PoWHint, PowGadget};
 use bitcoin_circle_stark::treepp::*;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{FunctionOutput, FunctionWithOptionsMetadata};
-use bitcoin_script_dsl::options::Options;
 use stwo_prover::core::channel::{Channel, Sha256Channel};
 use stwo_prover::core::vcs::sha256_hash::Sha256Hash;
 
@@ -73,11 +73,11 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::options::Options;
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::options::Options;
-    use bitcoin_script_dsl::test_program;
     use rand::{RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::channel::{Channel, Sha256Channel};

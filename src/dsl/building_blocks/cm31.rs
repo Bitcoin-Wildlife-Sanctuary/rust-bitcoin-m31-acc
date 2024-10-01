@@ -4,11 +4,11 @@ use crate::algorithms::utils::{
     check_limb_format, convert_cm31_from_limbs, convert_cm31_to_limbs, OP_HINT,
 };
 use crate::dsl::building_blocks::m31::m31_to_limbs_gadget;
+use crate::dsl::framework::dsl::{Element, MemoryEntry, DSL};
+use crate::dsl::framework::functions::{FunctionMetadata, FunctionOutput};
 use anyhow::Error;
 use anyhow::Result;
 use bitcoin_circle_stark::treepp::*;
-use bitcoin_script_dsl::dsl::{Element, MemoryEntry, DSL};
-use bitcoin_script_dsl::functions::{FunctionMetadata, FunctionOutput};
 use rust_bitcoin_m31::{
     cm31_add as raw_cm31_add, cm31_equalverify as raw_cm31_equalverify, cm31_sub as raw_cm31_sub,
     m31_add, push_cm31_one,
@@ -494,10 +494,10 @@ pub(crate) fn load_functions(dsl: &mut DSL) -> Result<()> {
 mod test {
     use crate::algorithms::utils::{convert_cm31_to_limbs, convert_m31_to_limbs};
     use crate::dsl::building_blocks::cm31::{cm31_mul_m31_limbs, reformat_cm31_to_dsl_element};
+    use crate::dsl::framework::dsl::{Element, DSL};
+    use crate::dsl::framework::test_program;
     use crate::dsl::{load_data_types, load_functions};
     use bitcoin_circle_stark::treepp::*;
-    use bitcoin_script_dsl::dsl::{Element, DSL};
-    use bitcoin_script_dsl::test_program;
     use rand::{Rng, RngCore, SeedableRng};
     use rand_chacha::ChaCha20Rng;
     use stwo_prover::core::fields::cm31::CM31;

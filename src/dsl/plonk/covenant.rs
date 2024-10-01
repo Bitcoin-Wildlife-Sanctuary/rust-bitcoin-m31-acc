@@ -1,11 +1,11 @@
 use crate::algorithms::utils::OP_HINT;
+use crate::dsl::framework::compiler::Compiler;
+use crate::dsl::framework::dsl::Element;
 use crate::dsl::plonk::hints::Hints;
 use anyhow::Result;
 use bitcoin::script::write_scriptint;
 use bitcoin_circle_stark::treepp::*;
 use bitcoin_circle_stark::utils::hash;
-use bitcoin_script_dsl::compiler::Compiler;
-use bitcoin_script_dsl::dsl::Element;
 use bitcoin_scriptexec::utils::scriptint_vec;
 use covenants_gadgets::utils::stack_hash::StackHash;
 use covenants_gadgets::CovenantProgram;
