@@ -7,22 +7,23 @@ default-run = "demo_plonk"
 [dependencies]
 rand = "0.8.5"
 rand_chacha = "0.3.1"
-bitcoin-script = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-script" }
+bitcoin-script = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-script", tag = "1.0.0" }
 bitcoin = "0.32.0"
-bitcoin-scriptexec = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-scriptexec", features = ["debug"] }
+bitcoin-scriptexec = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-scriptexec", tag = "1.0.0", features = ["debug"] }
 anyhow = "1.0.86"
-rust-bitcoin-m31 = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-m31" }
-stwo-prover = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo" }
+rust-bitcoin-m31 = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/rust-bitcoin-m31", tag = "1.0.0" }
+stwo-prover = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo", tag = "for-fibonacci" }
 itertools = "0.10.5"
-bitcoin-script-dsl =  { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/dsl" }
-bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark" }
+bitcoin-circle-stark = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-circle-stark", tag = "1.0.0" }
 num-traits = "0.2.19"
-covenants-gadgets = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/covenants-gadgets" }
+covenants-gadgets = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/covenants-gadgets", tag = "1.0.0" }
 sha2 = "0.10.8"
 clap = { version = "4.5.0", features = ["derive"] }
 colored = "2.1.0"
 hex = "0.4.3"
-bitcoin-simulator = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-simulator" }
+bitcoin-simulator = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-simulator", tag = "1.0.0" }
+fenwick-tree = "0.1.0"
+indexmap = "2.4.0"
 
 [features]
 assume-op-cat = []
