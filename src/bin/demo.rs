@@ -183,8 +183,7 @@ fn main() {
             tx.consensus_encode(&mut bytes).unwrap();
 
             // this directory is to Fractal mainnet
-            let mut fs =
-                std::fs::File::create(format!("./demo-fractal-plonk/tx-{}.txt", i + 1)).unwrap();
+            let mut fs = std::fs::File::create(format!("./demo-fractal/tx-{}.txt", i + 1)).unwrap();
             fs.write_all(hex::encode(bytes).as_bytes()).unwrap();
         }
 

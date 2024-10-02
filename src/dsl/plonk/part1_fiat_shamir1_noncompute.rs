@@ -1,9 +1,8 @@
 use crate::dsl::building_blocks::point::get_random_point_skipped;
 use crate::dsl::building_blocks::qm31::reformat_qm31_to_dsl_element;
-use crate::dsl::fibonacci::hints::FIB_LOG_SIZE;
 use crate::dsl::framework::dsl::{Element, DSL};
 use crate::dsl::framework::options::Options;
-use crate::dsl::plonk::hints::Hints;
+use crate::dsl::plonk::hints::{Hints, LOG_N_ROWS};
 use crate::dsl::tools::{zip_elements, Zipper};
 use crate::dsl::{load_data_types, load_functions};
 use anyhow::Result;
@@ -163,7 +162,7 @@ pub fn generate_dsl(hints: &Hints, cache: &mut HashMap<String, Zipper>) -> Resul
     let mut queries = dsl.execute_with_options(
         "draw_8_numbers",
         &[channel_var],
-        &Options::new().with_u32("logn", FIB_LOG_SIZE + LOG_BLOWUP_FACTOR + 1),
+        &Options::new().with_u32("logn", LOG_N_ROWS + LOG_BLOWUP_FACTOR + 1),
     )?;
     let _ = queries.remove(0);
     // at this moment, the channel is no longer needed.

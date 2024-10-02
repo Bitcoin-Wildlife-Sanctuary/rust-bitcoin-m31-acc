@@ -1,5 +1,4 @@
 pub mod building_blocks;
-pub mod fibonacci;
 pub mod framework;
 pub mod modules;
 pub mod plonk;
