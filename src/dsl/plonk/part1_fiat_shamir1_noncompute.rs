@@ -1,13 +1,15 @@
+use crate::algorithms::verify_pow;
 use crate::dsl::plonk::hints::{Hints, LOG_N_ROWS};
 use anyhow::Result;
-use itertools::Itertools;
-use std::collections::HashMap;
 use bitcoin_script_dsl::builtins::hash::HashVar;
 use bitcoin_script_dsl::builtins::qm31::QM31Var;
 use bitcoin_script_dsl::bvar::AllocVar;
 use bitcoin_script_dsl::constraint_system::{ConstraintSystem, ConstraintSystemRef};
 use bitcoin_script_dsl::worm::WORMMemory;
+use itertools::Itertools;
+use std::collections::HashMap;
 use stwo_prover::core::channel::Sha256Channel;
+use stwo_prover::core::prover::PROOF_OF_WORK_BITS;
 
 pub fn generate_cs(hints: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSystemRef> {
     let cs = ConstraintSystem::new_ref();
@@ -17,7 +19,10 @@ pub fn generate_cs(hints: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSys
 
     // Step 1: mix the channel with the trace commitment
     let mut channel_var = HashVar::new_constant(&cs, channel.digest().as_ref().to_vec())?;
-    let trace_commitment_var = HashVar::new_hint(&cs, hints.fiat_shamir_hints.commitments[0].as_ref().to_vec())?;
+    let trace_commitment_var = HashVar::new_hint(
+        &cs,
+        hints.fiat_shamir_hints.commitments[0].as_ref().to_vec(),
+    )?;
 
     channel_var = &channel_var + &trace_commitment_var;
 
@@ -26,8 +31,14 @@ pub fn generate_cs(hints: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSys
     let alpha_var = channel_var.draw_felt();
 
     // Step 3: mix the channel with the interaction commitment and constant commitment
-    let interaction_commitment_var = HashVar::new_hint(&cs, hints.fiat_shamir_hints.commitments[1].as_ref().to_vec())?;
-    let constant_commitment_var = HashVar::new_hint(&cs, hints.fiat_shamir_hints.commitments[2].as_ref().to_vec())?;
+    let interaction_commitment_var = HashVar::new_hint(
+        &cs,
+        hints.fiat_shamir_hints.commitments[1].as_ref().to_vec(),
+    )?;
+    let constant_commitment_var = HashVar::new_hint(
+        &cs,
+        hints.fiat_shamir_hints.commitments[2].as_ref().to_vec(),
+    )?;
 
     channel_var = &channel_var + &interaction_commitment_var;
     channel_var = &channel_var + &constant_commitment_var;
@@ -35,7 +46,10 @@ pub fn generate_cs(hints: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSys
     let composition_fold_random_coeff_var = channel_var.draw_felt();
 
     // Step 4: mix the channel with composition commitment
-    let composition_commitment_var = HashVar::new_hint(&cs, hints.fiat_shamir_hints.commitments[3].as_ref().to_vec())?;
+    let composition_commitment_var = HashVar::new_hint(
+        &cs,
+        hints.fiat_shamir_hints.commitments[3].as_ref().to_vec(),
+    )?;
     channel_var = &channel_var + &composition_commitment_var;
 
     // Step 5: save a copy of the channel before drawing the OODS point draw (for deferred computation)
@@ -88,7 +102,8 @@ pub fn generate_cs(hints: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSys
     let mut fri_tree_commitments_vars = vec![];
     let mut folding_alphas_vars = vec![];
     for fri_tree_commitment in hints.fiat_shamir_hints.fri_layer_commitments.iter() {
-        let fri_tree_commitment_var = HashVar::new_hint(&cs, fri_tree_commitment.as_ref().to_vec())?;
+        let fri_tree_commitment_var =
+            HashVar::new_hint(&cs, fri_tree_commitment.as_ref().to_vec())?;
 
         channel_var = &channel_var + &fri_tree_commitment_var;
         fri_tree_commitments_vars.push(fri_tree_commitment_var);
@@ -101,16 +116,14 @@ pub fn generate_cs(hints: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSys
     let last_layer_var = QM31Var::new_hint(&cs, hints.fiat_shamir_hints.last_layer)?;
     channel_var = &channel_var + &last_layer_var;
 
-        /*
-        // Step 10: check proof of work
-        channel_var = dsl.execute_with_options(
-            "verify_pow",
-            &[channel_var],
-            &Options::new()
-                .with_u32("n_bits", PROOF_OF_WORK_BITS)
-                .with_u64("nonce", hints.fiat_shamir_hints.pow_hint.nonce),
-        )?[0];
+    // Step 10: check proof of work
+    verify_pow(
+        &mut channel_var,
+        PROOF_OF_WORK_BITS,
+        hints.fiat_shamir_hints.pow_hint.nonce,
+    )?;
 
+    /*
         // Step 11: draw all the queries
         let mut queries = dsl.execute_with_options(
             "draw_8_numbers",
