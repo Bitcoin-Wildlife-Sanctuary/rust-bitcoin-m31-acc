@@ -22,8 +22,7 @@ clap = { version = "4.5.0", features = ["derive"] }
 colored = "2.1.0"
 hex = "0.4.3"
 bitcoin-simulator = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/bitcoin-simulator", tag = "1.0.0" }
-fenwick-tree = "0.1.0"
-indexmap = "2.4.0"
+bitcoin-script-dsl = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/dsl" }
 
 [features]
 assume-op-cat = []
