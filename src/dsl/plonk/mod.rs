@@ -10,6 +10,12 @@ pub mod part7_column_line_coeffs3;
 
 pub mod per_query_part1_folding;
 pub mod per_query_part2_num_trace;
+pub mod per_query_part3_num_constant;
+pub mod per_query_part4_num_composition;
+pub mod per_query_part5_num_interaction_shifted;
+pub mod per_query_part6_num_interaction1;
+pub mod per_query_part7_num_interaction2;
+pub mod per_query_part8_last_step;
 
 pub mod part8_cleanup;
 
@@ -99,6 +105,82 @@ mod test {
 
         for i in 0..N_QUERIES {
             let cs = super::per_query_part1_folding::generate_cs(&hints, &mut worm, i).unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs = super::per_query_part2_num_trace::generate_cs(&hints, &mut worm, i).unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs =
+                super::per_query_part3_num_constant::generate_cs(&hints, &mut worm, i).unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs =
+                super::per_query_part4_num_composition::generate_cs(&hints, &mut worm, i).unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs =
+                super::per_query_part5_num_interaction_shifted::generate_cs(&hints, &mut worm, i)
+                    .unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs =
+                super::per_query_part6_num_interaction1::generate_cs(&hints, &mut worm, i).unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs =
+                super::per_query_part7_num_interaction2::generate_cs(&hints, &mut worm, i).unwrap();
+            test_program(
+                cs,
+                script! {
+                    { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                    { worm.read_hash_var.as_ref().unwrap().value.clone() }
+                },
+            )
+            .unwrap();
+
+            let cs = super::per_query_part8_last_step::generate_cs(&hints, &mut worm, i).unwrap();
             test_program(
                 cs,
                 script! {

@@ -12,7 +12,8 @@ pub fn prepare_pair_vanishing(
     let y_second_inv = point.y.second.inverse(table);
     let x_second_div_y_second = &point.x.second * (table, &y_second_inv);
 
-    let cross_term = &x_second_div_y_second * (table, &point.y.first);
+    let mut cross_term = &x_second_div_y_second * (table, &point.y.first);
+    cross_term = &cross_term - &point.x.first;
 
     (x_second_div_y_second, cross_term)
 }

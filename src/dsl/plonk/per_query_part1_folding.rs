@@ -102,7 +102,7 @@ pub fn generate_cs(
 
     let expected_entry_quotient = folding_intermediate_vars[0]
         .0
-        .conditional_swap(&folding_intermediate_vars[1].1, &swap_bits_vars[0])
+        .conditional_swap(&folding_intermediate_vars[0].1, &swap_bits_vars[0])
         .0;
     worm.write(
         format!("expected_entry_quotient_{}", query_idx),

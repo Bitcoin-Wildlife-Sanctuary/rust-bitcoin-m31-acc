@@ -22,8 +22,8 @@ pub fn generate_cs(_: &Hints, worm: &mut WORMMemory) -> anyhow::Result<Constrain
     let table = TableVar::new_constant(&cs, ())?;
 
     let prepared_oods = prepare_pair_vanishing(&oods_point, &table);
-    worm.write("prepared_oods_x_second_div_y_second", &prepared_oods.0)?;
-    worm.write("prepared_oods_cross_term", &prepared_oods.1)?;
+    worm.write("prepared_oods_a", &prepared_oods.0)?;
+    worm.write("prepared_oods_b", &prepared_oods.1)?;
 
     let oods_shifted_by_1_x: QM31Var = worm.read("oods_shifted_by_1_x")?;
     let oods_shifted_by_1_y: QM31Var = worm.read("oods_shifted_by_1_y")?;
@@ -35,11 +35,11 @@ pub fn generate_cs(_: &Hints, worm: &mut WORMMemory) -> anyhow::Result<Constrain
 
     let prepared_oods_shifted_by_1 = prepare_pair_vanishing(&oods_shifted_by_1_point, &table);
     worm.write(
-        "prepared_oods_shifted_by_1_x_second_div_y_second",
+        "prepared_oods_shifted_by_1_a",
         &prepared_oods_shifted_by_1.0,
     )?;
     worm.write(
-        "prepared_oods_shifted_by_1_cross_term",
+        "prepared_oods_shifted_by_1_b",
         &prepared_oods_shifted_by_1.1,
     )?;
 
