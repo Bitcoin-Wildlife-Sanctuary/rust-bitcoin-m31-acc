@@ -26,14 +26,13 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut fees = vec![
-        50211, 48559, 117929, 38115, 107898, 35238, 42609, 75901, 46389, 69587, 75880, 43407,
-        66556, 41447,
-    ];
+    let mut fees = vec![114555, 210434, 103439, 101696, 93044, 81704, 92834];
 
     for _ in 0..8 {
-        fees.extend_from_slice(&[95865, 88641, 89467, 90027, 65905, 89159, 89019, 72933]);
+        fees.extend_from_slice(&[100926, 97293, 97167, 86863, 77679, 86863, 88802, 40467]);
     }
+
+    fees.push(49777);
 
     let fee_rate = 1500; // 1 for signet, ~1500 for fractal
     let network = Network::Bitcoin;
@@ -97,7 +96,7 @@ fn main() {
         println!();
         println!("Call this tool again with the funding txid and initial program id");
         println!(
-            "> cargo run --bin demo_plonk -- -f {} -i {}",
+            "> cargo run -- -f {} -i {}",
             "[funding txid]".on_bright_green().black(),
             "[initial program txid]".on_bright_green().black()
         );
@@ -139,7 +138,7 @@ fn main() {
             }
         };
 
-        for _ in 0..78 {
+        for _ in 0..72 {
             let next = get_instruction(&old_state).unwrap();
 
             let mut new_balance = old_balance;
@@ -188,6 +187,6 @@ fn main() {
         }
 
         println!("================= INSTRUCTIONS =================");
-        println!("All 78 transactions have been generated and stored in the current directory.");
+        println!("All 72 transactions have been generated and stored in the current directory.");
     }
 }
