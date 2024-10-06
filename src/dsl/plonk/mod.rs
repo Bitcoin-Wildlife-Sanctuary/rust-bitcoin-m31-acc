@@ -1,5 +1,7 @@
 pub mod hints;
 
+pub mod covenant;
+
 pub mod part1_fiat_shamir1;
 pub mod part2_fiat_shamir2_and_constraint_num;
 pub mod part3_constraint_denom;
@@ -192,6 +194,13 @@ mod test {
         }
 
         let cs = super::part8_cleanup::generate_cs(&hints, &mut worm).unwrap();
-        test_program(cs, script! {}).unwrap();
+        test_program(
+            cs,
+            script! {
+                { worm.write_hash_var.as_ref().unwrap().value.clone() }
+                { worm.read_hash_var.as_ref().unwrap().value.clone() }
+            },
+        )
+        .unwrap();
     }
 }

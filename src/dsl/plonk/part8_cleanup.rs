@@ -7,5 +7,6 @@ pub fn generate_cs(_: &Hints, worm: &mut WORMMemory) -> Result<ConstraintSystemR
     let cs = ConstraintSystem::new_ref();
     worm.init(&cs)?;
     worm.check()?;
+    worm.save()?;
     Ok(cs)
 }
